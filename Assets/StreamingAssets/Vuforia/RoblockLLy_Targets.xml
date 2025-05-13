@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QCARConfig>
+  <Tracking>
+    <ImageTarget name="car" size="1.000000 1.000000" />
+    <ImageTarget name="flag" size="1.000000 1.000000" />
+    <ImageTarget name="slidingwalls" size="1.000000 1.000000" />
+    <ImageTarget name="pressureplate" size="1.000000 1.000000" />
+    <ImageTarget name="wall" size="1.000000 1.000000" />
+  </Tracking>
+</QCARConfig>
