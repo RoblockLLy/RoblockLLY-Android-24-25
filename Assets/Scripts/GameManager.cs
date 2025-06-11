@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -47,8 +48,10 @@ public class GameManager : MonoBehaviour
   //  [2] Wall
   //  [3] Slide Wall
   //  [4] Plate
+  //  [5] Path
 
   private const int minGridSize = 5;
+  private const float quarterTurn = 0.70711f;
   private List<bool> activeObject = new List<bool>();
   private List<Coord> usedPositions = new List<Coord>();
 
@@ -133,17 +136,66 @@ public class GameManager : MonoBehaviour
       minStart.yVal = pos.yVal + 1;
     }
 
+    Coord flagCoord = new Coord(), startCoord = new Coord();
+
     if (activeObject[0]) {  // Flag Active
-      Coord pos = generateRandomPos(minFlag.xVal, maxFlag.xVal, minFlag.yVal, maxFlag.yVal);
+      Coord pos = flagCoord = generateRandomPos(minFlag.xVal, maxFlag.xVal, minFlag.yVal, maxFlag.yVal);
       flags.Add(buildJSON(objects[0].name + " 0", new Vector3(pos.xVal, 1, pos.yVal), new Quaternion(0 ,0 ,0 ,1)));
     }
+    
 
     if (activeObject[1]) {  // Spawn Active
-      Coord pos = generateRandomPos(minStart.xVal, maxStart.xVal, minStart.yVal, maxStart.yVal);
+      Coord pos = startCoord = generateRandomPos(minStart.xVal, maxStart.xVal, minStart.yVal, maxStart.yVal);
       spawnpoints.Add(buildJSON(objects[1].name + " 0", new Vector3(pos.xVal, 1, pos.yVal), new Quaternion(0 ,0 ,0 ,1)));
     }
 
-    for (int i = 0; i < levelSize; i++) { // Building Outer Walls
+    if (activeObject[5]) {  // Path
+      List<Coord> path = generatePath(startCoord, flagCoord);
+      for (int i = 0; i < path.Count; i++) {
+        Coord pos = path[i];
+        if (i == 0) { // First Straight Piece
+          Coord next = path[i + 1];
+          Quaternion rotation = new Quaternion(0, 0, 0 ,1);
+          if (next.xVal != pos.xVal) rotation = new Quaternion(0, quarterTurn, 0, -quarterTurn);
+          export.Add(buildJSON("Straight Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation));
+          count++;
+        } else if (i != path.Count - 1) { // Middle Path
+          Coord next = path[i + 1];
+          Coord prev = path[i - 1];
+          if (prev.xVal != next.xVal && prev.yVal != next.yVal) { // Corner Piece
+            Quaternion rotation = new Quaternion();
+            if (prev.xVal + 1 == next.xVal && prev.yVal + 1 == next.yVal) { // (+, +)
+              if (pos.yVal + 1 == next.yVal) rotation = new Quaternion(0, 1, 0, 0);
+              else rotation = new Quaternion(0, 0, 0, 1);                         
+            } else if (prev.xVal + 1 == next.xVal && prev.yVal - 1 == next.yVal) {  // (+ -)
+              if (pos.yVal - 1 == next.yVal) rotation = new Quaternion(0, quarterTurn, 0 , quarterTurn);
+              else rotation = new Quaternion(0, quarterTurn, 0 , -quarterTurn);     
+            } else if (prev.xVal - 1 == next.xVal && prev.yVal + 1 == next.yVal) {  // (-, +)
+              if (pos.yVal + 1 == next.yVal) rotation = new Quaternion(0, quarterTurn, 0 , -quarterTurn);
+              else rotation = new Quaternion(0, quarterTurn, 0 , quarterTurn);                                 
+            } else if (prev.xVal - 1 == next.xVal && prev.yVal - 1 == next.yVal) {  // (-, -)
+              if (pos.yVal - 1 == next.yVal) rotation = new Quaternion(0, 0, 0, 1);   
+              else rotation = new Quaternion(0, 1, 0, 0);
+            }
+            export.Add(buildJSON("Corner Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation));
+            count++;
+          } else {  // Straight Piece in Sequence
+            Quaternion rotation = new Quaternion(0, 0, 0 ,1);
+            if (next.xVal != pos.xVal) rotation = new Quaternion(0, quarterTurn, 0, -quarterTurn);
+            export.Add(buildJSON("Straight Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation));
+            count++;
+          }
+        } else {  // Final Straight Piece
+          Coord prev = path[i - 1];
+          Quaternion rotation = new Quaternion(0, 0, 0 ,1);
+          if (prev.xVal != pos.xVal) rotation = new Quaternion(0, quarterTurn, 0, -quarterTurn);
+          export.Add(buildJSON("Straight Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation));
+          count++;
+        }
+      }
+    }
+
+    for (int i = 0; i < levelSize; i++) { // Building Outer Walls & Floor
       for (int j = 0; j < levelSize; j++) {
         if (i != 0 && i != levelSize - 1 && j != 0 && j != levelSize - 1) {
           export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 0, j), new Quaternion(0 ,0 ,0 ,1), "Light Orange"));
@@ -157,6 +209,7 @@ public class GameManager : MonoBehaviour
 
     for (int i = 2; i < objects.Count; i++) {  // Build Additional Pieces
       if (i == 3) continue; // To remove later
+      if (i == 5) continue; // To remove later
       if (activeObject[i]) {
         Coord pos = generateRandomPos();
         export.Add(buildJSON(objects[i].name + " " + count.ToString(), new Vector3(pos.xVal, 1, pos.yVal), new Quaternion(0 ,0 ,0 ,0)));
@@ -255,6 +308,63 @@ public class GameManager : MonoBehaviour
     maxStart = new Coord { xVal = levelSize - 1, yVal = levelSize - 1 };
   }
 
+  private List<Coord> generatePath(Coord start, Coord end) {
+    Debug.Log("In Function!");
+    List<Coord> result = new List<Coord>();
+    HashSet<Coord> visited = new HashSet<Coord>();
+    Coord current = start;
+
+    result.Add(current);
+    visited.Add(current);
+
+    System.Random rng = new System.Random();
+
+    // Define movement directions
+    Vector2Int[] directions = new Vector2Int[]
+    {
+      Vector2Int.up,
+      Vector2Int.down,
+      Vector2Int.left,
+      Vector2Int.right
+    };
+
+    while (current.xVal != end.xVal || current.yVal != end.yVal)
+    {
+      // Create a list of valid, not-yet-visited neighbors
+      List<Coord> neighbors = new List<Coord>();
+
+      foreach (var dir in directions)
+      {
+        Coord next = new Coord { xVal = current.xVal + dir.x, yVal = current.yVal + dir.y };
+
+        // Optional: check bounds here if you want to limit to a grid
+        if (visited.Contains(next)) continue;
+
+        // Heuristic: only add moves that bring us closer or sideways
+        int remainingDistCurrent = Mathf.Abs(end.xVal - current.xVal) + Mathf.Abs(end.yVal - current.yVal);
+        int remainingDistNext = Mathf.Abs(end.xVal - next.xVal) + Mathf.Abs(end.yVal - next.yVal);
+
+        if (remainingDistNext <= remainingDistCurrent)
+        {
+          neighbors.Add(next);
+        }
+      }
+
+      if (neighbors.Count == 0)
+      {
+        // No valid moves, backtrack or fail
+        Debug.LogWarning("No valid path found. Path is blocked or trapped.");
+        return result;
+      }
+
+      // Pick a random neighbor
+      current = neighbors[rng.Next(neighbors.Count)];
+      result.Add(current);
+      visited.Add(current);
+    }
+    return result;
+  }
+
   #endregion
 
   #region Vuforia
@@ -267,7 +377,6 @@ public class GameManager : MonoBehaviour
   public void deactivateObject(int value) {
     // Solo actualizar si estamos en el form de scan
     if (!panelInfo.activeSelf) activeObject[value] = false;
-    Debug.Log("Lost!");
   }
 
   private void resetObjects() {
