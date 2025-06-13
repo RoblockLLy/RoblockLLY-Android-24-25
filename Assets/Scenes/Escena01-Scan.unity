@@ -3195,7 +3195,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "(M\xEDnimo 5)"
+  m_text: "(M\xEDnimo 7)"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -6378,14 +6378,14 @@ MonoBehaviour:
   PreviewVisible: 1
   RuntimeOcclusion: 0
   RuntimeCollider: 0
-  mTrackableName: wall_scaled
+  mTrackableName: wall_2_scaled
   mInitializedInEditor: 1
   mDataSetPath: 
-  mAspectRatio: 1
+  mAspectRatio: 0.8333334
   mImageTargetType: 3
   mWidth: 0.2
-  mHeight: 0.2
-  mRuntimeTexture: {fileID: 2800000, guid: 2cf099b1353a4a50b2a690e3a9305f30, type: 3}
+  mHeight: 0.16666667
+  mRuntimeTexture: {fileID: 2800000, guid: 7c65f0fcea0549f08758abef427b3131, type: 3}
   mMotionHint: 1
   mTrackingOptimization: 0
   mTrackingOptimizationNeedsUpgrade: 0
@@ -6404,7 +6404,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mObserverBehaviour: {fileID: 1614434813}
   mHiddenRoot: {fileID: 0}
-  mTargetName: wall_scaled
+  mTargetName: wall_2_scaled
   mDatasetName: 
   mCastedBehaviour: {fileID: 1614434813}
   mMeshFilter: {fileID: 0}
@@ -8367,7 +8367,7 @@ GameObject:
   - component: {fileID: 2027525579}
   - component: {fileID: 2027525582}
   - component: {fileID: 2027525581}
-  - component: {fileID: 2027525580}
+  - component: {fileID: 2027525583}
   m_Layer: 0
   m_Name: Target-Path
   m_TagString: Untagged
@@ -8391,25 +8391,6 @@ Transform:
   - {fileID: 864299513}
   m_Father: {fileID: 257820640}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2027525580
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2027525578}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1778676317, guid: 8a9a760f95896c34689febc965510927, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mObserverBehaviour: {fileID: 2027525582}
-  mHiddenRoot: {fileID: 0}
-  mTargetName: path_scaled
-  mDatasetName: 
-  mCastedBehaviour: {fileID: 2027525582}
-  mMeshFilter: {fileID: 0}
-  mMeshRenderer: {fileID: 0}
 --- !u!114 &2027525581
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8504,7 +8485,26 @@ MonoBehaviour:
   mMotionHint: 1
   mTrackingOptimization: 0
   mTrackingOptimizationNeedsUpgrade: 0
-  mPreview: {fileID: 2027525580}
+  mPreview: {fileID: 2027525583}
+--- !u!114 &2027525583
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2027525578}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1778676317, guid: 8a9a760f95896c34689febc965510927, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mObserverBehaviour: {fileID: 2027525582}
+  mHiddenRoot: {fileID: 0}
+  mTargetName: path_scaled
+  mDatasetName: 
+  mCastedBehaviour: {fileID: 2027525582}
+  mMeshFilter: {fileID: 0}
+  mMeshRenderer: {fileID: 0}
 --- !u!1 &2059424613
 GameObject:
   m_ObjectHideFlags: 0
