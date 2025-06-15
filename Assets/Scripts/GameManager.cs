@@ -41,6 +41,8 @@ public class GameManager : MonoBehaviour {
   public GameObject panelInfo;
   [SerializeField] [Tooltip("Form UI para cuando se ha introducido toda la información adicional")]
   public GameObject panelExport;
+  [SerializeField] [Tooltip("Form UI para cuando ha ocurrido un error con la generación del nivel")]
+  public GameObject panelError;
   [SerializeField] [Tooltip("Campo donde mostrar el código completado del nivel")]
   public TMP_InputField exportText;
   [SerializeField] [Tooltip("Lista de objetos que pueden ser invocados por Vuforia")]
@@ -88,9 +90,10 @@ public class GameManager : MonoBehaviour {
   public void CodePanel() {
     if (panelExport.activeSelf) {
       panelExport.SetActive(false);
+    } else if (panelError.activeSelf) {
+      panelError.SetActive(false);
     } else {
-      buildExport();
-      panelExport.SetActive(true);
+      if (buildExport()) panelExport.SetActive(true);
     }
   }
 
@@ -98,7 +101,7 @@ public class GameManager : MonoBehaviour {
 
   #region Build JSON
 
-  public void buildExport() {
+  public bool buildExport() {
     JObject result = buildEnv();
     
     usedPositions.Clear();  // Dejar vacio cada vez que empezamos una nueva export
@@ -166,18 +169,19 @@ public class GameManager : MonoBehaviour {
       if (activeObject[3]) {
         stops.Add(plateCoord01);
         stops.Add(doorCoord01);
-      } else {
+      } else if (!activeObject[2]) { // If maze don't add mid point
         stops.Add(generateRandomPos()); // Remove for direct path to end
       }
       stops.Add(flagCoord);
 
       for (int i = 0; i < stops.Count - 1; i++) { // Forming the path through the different elements
-        List<Coord> tempPath = generatePath(stops[i], stops[i + 1]);
+        List<Coord> tempPath = GeneratePathRecursive(stops[i], stops[i + 1]);
+        if (tempPath.Count == 0) return false; // Ha ocurrido un error
         if (i != 0) tempPath.RemoveAt(0);
         path.AddRange(tempPath);
       }
 
-      for (int i = 0; i < path.Count; i++) {
+      for (int i = 0; i < path.Count; i++) { // Adding correct corner Piece
         Coord pos = path[i];
         if (i == 0) { // First Straight Piece
           Coord next = path[i + 1];
@@ -223,6 +227,7 @@ public class GameManager : MonoBehaviour {
 
     finishedLevel = result.ToString(Formatting.Indented);
     exportText.text = finishedLevel;
+    return true;
   }
 
   private JObject buildEnv() {
@@ -314,73 +319,58 @@ public class GameManager : MonoBehaviour {
 
   #region Path Generation
 
-  private List<Coord> generatePath(Coord start, Coord end) {
+  private List<Coord> GeneratePathRecursive(Coord start, Coord end) {
     List<Coord> result = new List<Coord>();
     HashSet<Coord> visited = new HashSet<Coord>();
-    Coord current = start;
 
-    result.Add(current);
+    bool found = TryStep(start, start, end, visited, result);
+    if (!found) {
+      panelError.SetActive(true);
+      Debug.LogWarning("No valid path found.");
+      return new List<Coord>();
+    }
+    return result;
+  }
+
+  private bool TryStep(Coord start, Coord current, Coord end, HashSet<Coord> visited, List<Coord> path) {
+    // Avoid already visited or blocked positions (excluding start and end)
+    if (usedPositions.Contains(current) && !current.Equals(start) && !current.Equals(end) ) {
+      return false;
+    }
+
+    if (visited.Contains(current)) return false;
+
     visited.Add(current);
+    path.Add(current);
 
-    System.Random rng = new System.Random();
+    if (current.Equals(end)) return true;
 
-    // Define movement directions
+    // Define and shuffle movement directions
     Vector2Int[] directions = new Vector2Int[] {
       Vector2Int.up,
       Vector2Int.down,
       Vector2Int.left,
       Vector2Int.right
-    };
+    }.OrderBy(_ => UnityEngine.Random.value).ToArray();
 
-    while (current.xVal != end.xVal || current.yVal != end.yVal)
-    {
-      // Create a list of valid, not-yet-visited neighbors
-      List<Coord> neighbors = new List<Coord>();
-      List<Coord> backup = new List<Coord>();
+    // Try each direction recursively
+    foreach (var dir in directions) {
+      Coord next = new Coord { xVal = current.xVal + dir.x, yVal = current.yVal + dir.y };
 
-      foreach (var dir in directions) {
-        Coord next = new Coord { xVal = current.xVal + dir.x, yVal = current.yVal + dir.y };
+      int currentDist = Mathf.Abs(end.xVal - current.xVal) + Mathf.Abs(end.yVal - current.yVal);
+      int nextDist = Mathf.Abs(end.xVal - next.xVal) + Mathf.Abs(end.yVal - next.yVal);
 
-        // if (usedPositions.Contains(next)) {
-        //   if ((next.xVal != start.xVal && next.yVal != start.yVal) || (next.xVal != end.xVal && next.yVal != end.yVal)) {
-        //     continue;
-        //   }
-        // }
-        if (visited.Contains(next)) continue;
-
-        // Heuristic: only add moves that bring us closer or sideways
-        int remainingDistCurrent = Mathf.Abs(end.xVal - current.xVal) + Mathf.Abs(end.yVal - current.yVal);
-        int remainingDistNext = Mathf.Abs(end.xVal - next.xVal) + Mathf.Abs(end.yVal - next.yVal);
-
-        if (remainingDistNext <= remainingDistCurrent) {
-          neighbors.Add(next);
-        } else {
-          backup.Sort((a, b) => {
-              int distA = Mathf.Abs(a.xVal - end.xVal) + Mathf.Abs(a.yVal - end.yVal);
-              int distB = Mathf.Abs(b.xVal - end.xVal) + Mathf.Abs(b.yVal - end.yVal);
-              return distA.CompareTo(distB); // Ascending order: closest first
-          });
-          backup.Add(next);
+      if (nextDist <= currentDist) {
+        if (TryStep(start, next, end, visited, path)) {
+          usedPositions.Add(current);
+          return true;
         }
       }
-
-      if (neighbors.Count == 0) {
-        // No optimal movements, we must use backup instead
-        if (backup.Count == 0) {
-          // No valid moves, failed to build
-          Debug.LogWarning("No valid path found. Path is blocked or trapped.");
-          return result;
-        }
-        current = backup[0];
-      } else {
-        // Pick a random neighbor
-        current = neighbors[rng.Next(neighbors.Count)];
-      }  
-
-      result.Add(current);
-      visited.Add(current);
     }
-    return result;
+
+    // Backtrack
+    path.RemoveAt(path.Count - 1);
+    return false;
   }
 
   private Quaternion getCornerRotation(Coord prev, Coord pos, Coord next) {
