@@ -282,7 +282,7 @@ RectTransform:
   m_GameObject: {fileID: 20027312}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.475979, y: 0.153979, z: 1}
+  m_LocalScale: {x: 0.5378563, y: 0.153979, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1499744845}
@@ -1334,7 +1334,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 110}
+  m_AnchoredPosition: {x: 38, y: 110}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &280904572
@@ -1357,7 +1357,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Error
+  m_text: "ERROR: \n\nPor Favor Intente de nuevo"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1390,7 +1390,7 @@ MonoBehaviour:
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
-  m_fontStyle: 0
+  m_fontStyle: 33
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
@@ -1422,7 +1422,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: -26.21775, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -2747,7 +2747,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 243734784}
         m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: OpenScan
+        m_MethodName: ScanPanel
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -5791,6 +5791,61 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!1 &1321028953
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1321028954}
+  - component: {fileID: 1321028955}
+  m_Layer: 0
+  m_Name: JsonGenerator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1321028954
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1321028953}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1893161366}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1321028955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1321028953}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2843dfe9366465f4aafc8fa51997347a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  levelText: {fileID: 2059424615}
+  userText: {fileID: 1287965089}
+  skyboxText: {fileID: 45604860}
+  sizeText: {fileID: 395380807}
+  objects:
+  - {fileID: 1050370589}
+  - {fileID: 914680748}
+  - {fileID: 65292590}
+  - {fileID: 1453091107}
+  - {fileID: 1639402018}
+  - {fileID: 864299512}
 --- !u!1 &1348937538
 GameObject:
   m_ObjectHideFlags: 0
@@ -7318,7 +7373,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 243734784}
         m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: CodePanel
+        m_MethodName: CloseErrorPanel
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -8468,7 +8523,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 243734784}
         m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: OpenScan
+        m_MethodName: ScanPanel
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -8719,6 +8774,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 243734785}
+  - {fileID: 1321028954}
   - {fileID: 1216928815}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -10041,6 +10097,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 45604860}
     - target: {fileID: 3155914837261162608, guid: 47717278f23069c41bcf158e3051cd56, type: 3}
+      propertyPath: jsonBuilder
+      value: 
+      objectReference: {fileID: 1321028955}
+    - target: {fileID: 3155914837261162608, guid: 47717278f23069c41bcf158e3051cd56, type: 3}
       propertyPath: panelExport
       value: 
       objectReference: {fileID: 32179461}
@@ -10085,10 +10145,10 @@ PrefabInstance:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1893161366}
   - {fileID: 724573792}
   - {fileID: 410087041}
   - {fileID: 832575519}
+  - {fileID: 1893161366}
   - {fileID: 288418974}
   - {fileID: 512907713}
   - {fileID: 32179462}

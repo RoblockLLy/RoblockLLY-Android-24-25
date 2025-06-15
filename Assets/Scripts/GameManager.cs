@@ -1,40 +1,27 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using TMPro;
-using Unity.VisualScripting;
-using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
+/**
+* Universidad de La Laguna
+* Proyecto: Roblockly-Android
+* Autor: Thomas Edward Bradley
+* Email: alu0101408248@ull.edu.es
+* Fecha: 15/06/2025
+* Descripcion: Manager de los elementos UI y rasgos generales del proyecto
+*/
 
-struct Coord {
-  public int xVal;
-  public int yVal;
-};
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
 
 public class GameManager : MonoBehaviour {
   
   #region Atributos
-  
-  [Header("Campos Modificables")]
-  [SerializeField] [Tooltip("Tamaño NxN del grid, incluyendo paredes externas")]
-  public int levelSize = 7;
-  
-  [Header("Campos de Texto Usuario")]
-  [SerializeField] [Tooltip("Input de usuario con el nombre del nivel")]
-  public TMP_InputField levelText;
-  [SerializeField] [Tooltip("Input de usuario con el nombre del usuario")]
-  public TMP_InputField userText;
-  [SerializeField] [Tooltip("Input de usuario con el nombre del skybox")]
-  public TextMeshProUGUI skyboxText;
-  [SerializeField] [Tooltip("Input de usuario con el tamaño del nivel")]
-  public TMP_InputField sizeText;
 
-  [Header("Referencias a Objetos")]
+  [Header("Referencias a Managers")]
+  [SerializeField] [Tooltip("Código para generar nuestro fichero JSON")]
+  public JsonGenerator jsonBuilder;
   [SerializeField] [Tooltip("Código para subir nuestros resultados a GitHub")]
   public GitHubUploader uploader;
+
+  [Header("Elementos UI")]
   [SerializeField] [Tooltip("Form UI para cuando se esta haciendo el scan")]
   public GameObject panelScan;
   [SerializeField] [Tooltip("Form UI para cuando se ha hecho el scan")]
@@ -45,374 +32,111 @@ public class GameManager : MonoBehaviour {
   public GameObject panelError;
   [SerializeField] [Tooltip("Campo donde mostrar el código completado del nivel")]
   public TMP_InputField exportText;
-  [SerializeField] [Tooltip("Lista de objetos que pueden ser invocados por Vuforia")]
-  public List<GameObject> objects;
-  //  [0] Goal
-  //  [1] Car
-  //  [2] Wall
-  //  [3] Slide Wall
-  //  [4] Plate
-  //  [5] Path
 
-  private const int minGridSize = 7;
-  private const float quarterTurn = 0.70711f;
-  private List<bool> activeObject = new List<bool>();
-  private List<Coord> usedPositions = new List<Coord>();
-  HashSet<Coord> visitedPaths = new HashSet<Coord>();
-
-  private string finishedLevel = "";
-
-  private Coord minFlag;
-  private Coord maxFlag;
-  private Coord minStart;
-  private Coord maxStart;
+  /// <summary>
+  /// Lista de objetos activados por Vuforia, true si estan puestos
+  /// </summary>
+  private List<bool> activeObjects = new List<bool>();
+  /// <summary>
+  /// Texto completado del nivel generado
+  /// </summary>
+  private string finishedLevelText = "";
 
   #endregion
 
+  /// <summary>
+  /// Reseteamos la lista de Objetos al iniciar
+  /// </summary>
   private void Start() {
     resetObjects();
   }
    
   #region UI
 
-  public void OpenScan() {
-    if (panelInfo.activeSelf) {
-      resetObjects(); // Objetos detectados a false
-      panelScan.SetActive(true);  // Necesario ocultar para que no se reorganice con la activación del Dropdown
+  /// <summary>
+  /// Activado cuando queremos abrir o cerrar el panel de Scan (el principal con la cámara)
+  /// Prepara la UI necesario conforme a lo previo
+  /// </summary>
+  public void ScanPanel() {
+    if (panelInfo.activeSelf) {   // Volver a panel de Scan
+      resetObjects();             // Borrar objetos guardados como encontrados al volver
+      panelScan.SetActive(true);
       panelInfo.SetActive(false);
       if (panelExport.activeSelf) panelExport.SetActive(false);
-    } else {
-      panelScan.SetActive(false);
+      if (panelError.activeSelf) panelError.SetActive(false);
+    } else {                      // Avanzar al Panel de Información Adicional
+      panelScan.SetActive(false); // Necesario ocultar porque interactua mal con el Dropdown de Skybox
       panelInfo.SetActive(true);
     }
   }
 
+  /// <summary>
+  /// Activado cuando queremos abrir o cerrar el panel de Codigo (con el nivel generado)
+  /// Si no esta abierto, se encargara de generar nuestro nivel para poder mostrar esta
+  /// </summary>
   public void CodePanel() {
     if (panelExport.activeSelf) {
       panelExport.SetActive(false);
-    } else if (panelError.activeSelf) {
-      panelError.SetActive(false);
     } else {
-      if (buildExport()) panelExport.SetActive(true);
+      jsonBuilder.setActiveObjects(activeObjects);
+      string result = jsonBuilder.buildExport();
+
+      if (!string.IsNullOrEmpty(result)) {
+        exportText.text = finishedLevelText = result;
+        panelExport.SetActive(true);
+      } else {  // Se ha producido un error con la generación
+        panelError.SetActive(true);
+      } 
     }
   }
 
-  #endregion
-
-  #region Build JSON
-
-  public bool buildExport() {
-    JObject result = buildEnv();
-    
-    usedPositions.Clear();  // Dejar vacio cada vez que empezamos una nueva export
-    setupCoordValues();     // Para dejar meta y jugador en posiciones adecuadas
-
-    JArray flags = new JArray();
-    JArray spawnpoints = new JArray();
-    JArray export = new JArray();
-
-    int count = 0;  // So objects have unique names
-
-    Coord doorCoord01 = new Coord(), plateCoord01 = new Coord();
-
-    if (activeObject[3]) {  // Slide Wall, tiene que ser antes de bandera y jugador
-      Coord pos = doorCoord01 = generateRandomPos(2, levelSize - 2, 2, levelSize - 2);  // No puede ir en los laterales
-      export.Add(buildJSON(objects[3].name + " " + count.ToString(), new Vector3(pos.xVal, 1, pos.yVal), new Quaternion(0 ,0 ,0 ,1), "Turquoise"));
-
-      Coord platePos = plateCoord01 = generateRandomPos(1, levelSize - 1, pos.yVal + 1, levelSize - 1);  // Placa para activar pared
-      export.Add(buildJSON("Pressure Plate " + count.ToString(), new Vector3(platePos.xVal, 1, platePos.yVal), new Quaternion(0 ,0 ,0 ,1), "White", count));
-
-      for (int i = 1; i < levelSize - 1; i++) { // Build Horizontal Wall
-        if (i == pos.xVal) continue;
-        export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 1, pos.yVal), new Quaternion(0 ,0 ,0 ,1)));
-        usedPositions.Add(new Coord { xVal = i, yVal = pos.yVal });
-        count++;
-      }
-
-      maxFlag.yVal = pos.yVal;
-      minStart.yVal = pos.yVal + 1;
-    }
-
-    Coord flagCoord = new Coord(), startCoord = new Coord();
-
-    if (activeObject[0]) {  // Flag
-      Coord pos = flagCoord = generateRandomPos(minFlag.xVal, maxFlag.xVal, minFlag.yVal, maxFlag.yVal);
-      flags.Add(buildJSON(objects[0].name + " 0", new Vector3(pos.xVal, 1, pos.yVal), new Quaternion(0 ,0 ,0 ,1)));
-    }
-
-    if (activeObject[1]) {  // Spawn
-      Coord pos = startCoord = generateRandomPos(minStart.xVal, maxStart.xVal, minStart.yVal, maxStart.yVal);
-      spawnpoints.Add(buildJSON(objects[1].name + " 0", new Vector3(pos.xVal, 1, pos.yVal), new Quaternion(0 ,0 ,0 ,1)));
-    }
-
-    if (activeObject[2]) {  // Maze
-      Vector2Int start = new Vector2Int(startCoord.xVal, startCoord.yVal);
-      Vector2Int end = new Vector2Int(flagCoord.xVal, flagCoord.yVal);
-
-      MazeGenerator generator = new MazeGenerator(levelSize, levelSize);
-      bool[,] maze = generator.GenerateMaze(start, end);
-
-      for (int x = 1; x < levelSize - 1; x++) {
-        for (int y = 1; y < levelSize - 1; y++) {
-          if (!maze[x, y]) {
-            usedPositions.Add(new Coord { xVal = x, yVal = y } );
-            export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(x, 1, y), new Quaternion(0 ,0 ,0 ,1)));
-            count++;
-          } 
-        }
-      }
-    }
-
-    if (activeObject[5]) {  // Path
-      List<Coord> path = new List<Coord>();
-      List<Coord> stops = new List<Coord> { startCoord };
-      if (activeObject[3]) {
-        stops.Add(plateCoord01);
-        stops.Add(doorCoord01);
-      } else if (!activeObject[2]) { // If maze don't add mid point
-        stops.Add(generateRandomPos()); // Remove for direct path to end
-      }
-      stops.Add(flagCoord);
-
-      for (int i = 0; i < stops.Count - 1; i++) { // Forming the path through the different elements
-        List<Coord> tempPath = GeneratePathRecursive(stops[i], stops[i + 1]);
-        if (tempPath.Count == 0) return false; // Ha ocurrido un error
-        if (i != 0) tempPath.RemoveAt(0);
-        path.AddRange(tempPath);
-      }
-
-      for (int i = 0; i < path.Count; i++) { // Adding correct corner Piece
-        Coord pos = path[i];
-        if (i == 0) { // First Straight Piece
-          Coord next = path[i + 1];
-          Quaternion rotation = new Quaternion(0, 0, 0 ,1);
-          if (next.xVal != pos.xVal) rotation = new Quaternion(0, quarterTurn, 0, -quarterTurn);
-          export.Add(buildJSON("Straight Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation));
-        } else if (i != path.Count - 1) { // Middle Path
-          Coord next = path[i + 1];
-          Coord prev = path[i - 1];
-          if (prev.xVal != next.xVal && prev.yVal != next.yVal) { // Corner Piece            
-            Quaternion rotation = getCornerRotation(prev, pos, next); // Obtener orientación del camino
-            export.Add(buildJSON("Corner Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation));
-          } else {  // Straight Piece in Sequence
-            Quaternion rotation = new Quaternion(0, 0, 0 ,1);
-            if (next.xVal != pos.xVal) rotation = new Quaternion(0, quarterTurn, 0, -quarterTurn);
-            export.Add(buildJSON("Straight Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation));
-          }
-        } else {  // Final Straight Piece
-          Coord prev = path[i - 1];
-          Quaternion rotation = new Quaternion(0, 0, 0 ,1);
-          if (prev.xVal != pos.xVal) rotation = new Quaternion(0, quarterTurn, 0, -quarterTurn);
-          export.Add(buildJSON("Straight Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation));
-        }
-        count++;  // Incrementar Contador
-      }
-    }
-
-    for (int i = 0; i < levelSize; i++) { // Building Outer Walls & Floor
-      for (int j = 0; j < levelSize; j++) {
-        if (i != 0 && i != levelSize - 1 && j != 0 && j != levelSize - 1) {
-          export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 0, j), new Quaternion(0 ,0 ,0 ,1), "Light Orange"));
-          count++;
-          continue;
-        }
-        export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 1, j), new Quaternion(0 ,0 ,0 ,1)));
-        count++;
-      }
-    }
-
-    result["spawnpoints"] = spawnpoints;
-    result["flags"] = flags;
-    result["level"] = export;
-
-    finishedLevel = result.ToString(Formatting.Indented);
-    exportText.text = finishedLevel;
-    return true;
-  }
-
-  private JObject buildEnv() {
-    try {
-      int temp = int.Parse(sizeText.text);
-      levelSize = temp < minGridSize ? minGridSize : temp;
-    } catch {
-      Debug.LogError("Size Input was not a valid number");
-      levelSize = minGridSize;
-    }
-    
-    JObject environment = new JObject {
-      { "skybox", skyboxText.text },
-      { "level_name", levelText.text },
-      { "user_name", userText.text },
-      { "dev_minutes", 0 },
-      { "dev_seconds", 0 },
-      { "dev_blocks", 0 }
-    };
-
-    return new JObject() { { "environment", environment } };
-  }
-
-  private JObject buildJSON(string name, Vector3 pos, Quaternion rotation, string colorSt = "White", int doorNumber = 0) {
-    JObject json = new JObject();
-    json["name"] = name;
-    json["position"] = pos.ToString();
-    json["rotation"] = rotation.ToString();
-
-    JArray options = new JArray();
-    if (name.Contains("Flag")) {
-      JObject time = new JObject { { "Timed", "False" } };
-      JObject seconds = new JObject { { "Seconds for win", "0" } };
-      options.Add(time);
-      options.Add(seconds);
-    } else if (name.Contains("Pressure Plate")) {
-      JObject lift = new JObject { { "Lifting Door " + doorNumber, "Toggle" } };
-      options.Add(lift);
-    } else if (!name.Contains("Spawnpoint")) {
-      JObject color = new JObject { { "Color", colorSt } };
-      options.Add(color);
-    }
-    json["options"] = options;
-
-    return json;
-  }
-
-  private Coord generateRandomPos(int minX = 1, int maxX = -1, int minY = 1, int maxY = -1) {
-    if (maxX == -1) maxX = levelSize - 1;
-    if (maxY == -1) maxY = levelSize - 1;
-    bool found = false;
-
-    while (!found) {
-      System.Random rnd = new System.Random();
-      int xCoord, yCoord;
-      if (minX == maxX) {
-        xCoord = minX;
-      } else {
-        xCoord = rnd.Next(minX, maxX);  // En el caso de 4, n >= 1 & n < 4
-      }
-      if (minY == maxY) {
-        yCoord = minY;
-      } else {
-        yCoord = rnd.Next(minY, maxY);
-      }
-      Coord generated = new Coord { xVal = xCoord, yVal = yCoord };
-      
-      if (!usedPositions.Contains(generated)) {
-        usedPositions.Add(new Coord { xVal = xCoord, yVal = yCoord });
-        found = true;
-      }
-    }
-
-    return usedPositions.Last();
-  }
-
-  private void setupCoordValues() {
-    minFlag = new Coord { xVal = 1, yVal = 1 };
-    maxFlag = new Coord { xVal = levelSize - 1, yVal = levelSize - 1 };
-    minStart = new Coord { xVal = 1, yVal = 1 };
-    maxStart = new Coord { xVal = levelSize - 1, yVal = levelSize - 1 };
-  }
-
-  public void submitGeneratedLevel() {
-    uploader.UploadTextAsFile(finishedLevel);
-  }
-
-  #endregion
-
-  #region Path Generation
-
-  private List<Coord> GeneratePathRecursive(Coord start, Coord end) {
-    List<Coord> result = new List<Coord>();
-    HashSet<Coord> visited = new HashSet<Coord>();
-
-    bool found = TryStep(start, start, end, visited, result);
-    if (!found) {
-      panelError.SetActive(true);
-      Debug.LogWarning("No valid path found.");
-      return new List<Coord>();
-    }
-    return result;
-  }
-
-  private bool TryStep(Coord start, Coord current, Coord end, HashSet<Coord> visited, List<Coord> path) {
-    // Avoid already visited or blocked positions (excluding start and end)
-    if (usedPositions.Contains(current) && !current.Equals(start) && !current.Equals(end) ) {
-      return false;
-    }
-
-    if (visited.Contains(current)) return false;
-
-    visited.Add(current);
-    path.Add(current);
-
-    if (current.Equals(end)) return true;
-
-    // Define and shuffle movement directions
-    Vector2Int[] directions = new Vector2Int[] {
-      Vector2Int.up,
-      Vector2Int.down,
-      Vector2Int.left,
-      Vector2Int.right
-    }.OrderBy(_ => UnityEngine.Random.value).ToArray();
-
-    // Try each direction recursively
-    foreach (var dir in directions) {
-      Coord next = new Coord { xVal = current.xVal + dir.x, yVal = current.yVal + dir.y };
-
-      int currentDist = Mathf.Abs(end.xVal - current.xVal) + Mathf.Abs(end.yVal - current.yVal);
-      int nextDist = Mathf.Abs(end.xVal - next.xVal) + Mathf.Abs(end.yVal - next.yVal);
-
-      if (nextDist <= currentDist) {
-        if (TryStep(start, next, end, visited, path)) {
-          usedPositions.Add(current);
-          return true;
-        }
-      }
-    }
-
-    // Backtrack
-    path.RemoveAt(path.Count - 1);
-    return false;
-  }
-
-  private Quaternion getCornerRotation(Coord prev, Coord pos, Coord next) {
-    // Tenemos que averiguar primero la posición de la siguiente pieza, y luego en que posición de 2 esta la actual
-    Quaternion rotation = new Quaternion();
-
-    if (prev.xVal + 1 == next.xVal && prev.yVal + 1 == next.yVal) { // (+, +)
-      if (pos.yVal + 1 == next.yVal) rotation = new Quaternion(0, 1, 0, 0);
-      else rotation = new Quaternion(0, 0, 0, 1);                         
-    } else if (prev.xVal + 1 == next.xVal && prev.yVal - 1 == next.yVal) {  // (+ -)
-      if (pos.yVal - 1 == next.yVal) rotation = new Quaternion(0, quarterTurn, 0 , quarterTurn);
-      else rotation = new Quaternion(0, quarterTurn, 0 , -quarterTurn);     
-    } else if (prev.xVal - 1 == next.xVal && prev.yVal + 1 == next.yVal) {  // (-, +)
-      if (pos.yVal + 1 == next.yVal) rotation = new Quaternion(0, quarterTurn, 0 , -quarterTurn);
-      else rotation = new Quaternion(0, quarterTurn, 0 , quarterTurn);                                 
-    } else if (prev.xVal - 1 == next.xVal && prev.yVal - 1 == next.yVal) {  // (-, -)
-      if (pos.yVal - 1 == next.yVal) rotation = new Quaternion(0, 0, 0, 1);   
-      else rotation = new Quaternion(0, 1, 0, 0);
-    }
-
-    return rotation;
+  /// <summary>
+  /// Se encarga de cerrar el panel de Error
+  /// </summary>
+  public void CloseErrorPanel() {
+    if (panelError.activeSelf) panelError.SetActive(false);
   }
 
   #endregion
 
   #region Vuforia
 
+  /// <summary>
+  /// Activado cuando Vuforia pilla un objeto, value corresponde a la posición del objeto pillado
+  /// Solo funcionara cuando estamos en el Form de Scan
+  /// </summary>
+  /// <param name="value"></param>
   public void activateObject(int value) {
-    // Solo actualizar si estamos en el form de scan
-    if (!panelInfo.activeSelf) activeObject[value] = true;
+    if (!panelInfo.activeSelf) activeObjects[value] = true;
   }
 
+  /// <summary>
+  /// Activado cuando Vuforia pierde un objeto, value corresponde a la posición del objeto perdido
+  /// Solo funcionara cuando estamos en el Form de Scan
+  /// </summary>
   public void deactivateObject(int value) {
-    // Solo actualizar si estamos en el form de scan
-    if (!panelInfo.activeSelf) activeObject[value] = false;
+    if (!panelInfo.activeSelf) activeObjects[value] = false;
   }
 
+  /// <summary>
+  /// Borramos la lista actual de objetos activos y lo volvemos a inicializar con todos a false
+  /// </summary>
   private void resetObjects() {
-    activeObject = new List<bool>();
-    foreach (bool val in objects) {
-      activeObject.Add(false);
+    activeObjects = new List<bool>();
+    for (int i = 0; i < jsonBuilder.objectAmount(); i++) {
+      activeObjects.Add(false);
     }
+  }
+
+  #endregion
+
+  #region Extra Buttons
+
+  /// <summary>
+  /// Deseamos subir nuestro nivel creado al repositorio de GitHub
+  /// </summary>
+  public void submitGeneratedLevel() {
+    uploader.UploadTextAsFile(finishedLevelText);
   }
 
   #endregion
