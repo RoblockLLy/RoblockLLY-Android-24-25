@@ -11,6 +11,8 @@ using UnityEngine;
 
 public class TokenEncryptor : MonoBehaviour {
   
+  #region Atributos
+
   [SerializeField] [Tooltip("Encrypted Token")] [TextArea]
   public string encryptedToken = "fill-me";
 
@@ -19,6 +21,8 @@ public class TokenEncryptor : MonoBehaviour {
   /// </summary>
   private int encryptionInt = 3;
   
+  #endregion
+
   /// <summary>
   /// Espacio para hacer tests y ver los resultados de encriptar / desencriptar
   /// </summary>
@@ -26,6 +30,8 @@ public class TokenEncryptor : MonoBehaviour {
     // Debug.Log("Encrypted -> " + EncryptString());
     // Debug.Log("Decrypted -> " + DecryptString());
   }
+
+  #region Metodos
 
   /// <summary>
   /// Encripta el token guardado como atributos
@@ -68,5 +74,7 @@ public class TokenEncryptor : MonoBehaviour {
 
     return builder.ToString();
   }
+
+  #endregion
 
 }
