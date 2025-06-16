@@ -4985,6 +4985,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1216928815}
   - component: {fileID: 1216928816}
+  - component: {fileID: 1216928817}
   m_Layer: 0
   m_Name: UploadManager
   m_TagString: Untagged
@@ -5024,7 +5025,20 @@ MonoBehaviour:
   folderInRepo: Levels
   commitMessage: Uploading Custom Level
   branch: main
-  personalAccessToken: 
+  encriptador: {fileID: 1216928817}
+--- !u!114 &1216928817
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1216928814}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10a4928e03f398c4c9257f3b9509a00c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  encryptedToken: jksbftfhu8m}mLSl6:}wwrExRFQs9sVNIN3J}UXt4
 --- !u!1 &1218466824
 GameObject:
   m_ObjectHideFlags: 0

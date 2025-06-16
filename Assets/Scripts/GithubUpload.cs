@@ -30,9 +30,9 @@ public class GitHubUploader : MonoBehaviour {
   [SerializeField] [Tooltip("Rama dentro del repositorio al que se subira el nivel")]
   public string branch = "main";
 
-  [Header("Authentication")] [TextArea]
-  [SerializeField] [Tooltip("Token con permisos sobre el repositorio, necesario para poder subir")]
-  public string personalAccessToken;
+  [Header("Authentication")]
+  [SerializeField] [Tooltip("Objeto que contiene el token encriptado y las funciones para desencriptarlo")]
+  public TokenEncryptor encriptador;
 
   #endregion
 
@@ -64,7 +64,7 @@ public class GitHubUploader : MonoBehaviour {
   private IEnumerator UploadCoroutine(string url, string base64Content, string pathInRepo) {
     // First check if file exists (usually it won’t for a randomized name)
     UnityWebRequest getRequest = UnityWebRequest.Get(url);
-    getRequest.SetRequestHeader("Authorization", "Bearer " + personalAccessToken);
+    getRequest.SetRequestHeader("Authorization", "Bearer " + encriptador.DecryptString());
     getRequest.SetRequestHeader("User-Agent", "UnityUploader");
     yield return getRequest.SendWebRequest();
 
@@ -88,7 +88,7 @@ public class GitHubUploader : MonoBehaviour {
     uploadRequest.uploadHandler = new UploadHandlerRaw(bodyRaw);
     uploadRequest.downloadHandler = new DownloadHandlerBuffer();
     uploadRequest.SetRequestHeader("Content-Type", "application/json");
-    uploadRequest.SetRequestHeader("Authorization", "Bearer " + personalAccessToken);
+    uploadRequest.SetRequestHeader("Authorization", "Bearer " + encriptador.DecryptString());
     uploadRequest.SetRequestHeader("User-Agent", "UnityUploader");
 
     yield return uploadRequest.SendWebRequest();
