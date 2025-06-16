@@ -20,6 +20,13 @@ public class MazeGenerator {
   /// </summary>
   public int size;
   /// <summary>
+  /// Tamaño excluyendo los bloques separadores, tiene la formula size * 2 + 1
+  /// Size siempre debe ser un numero impar y las posiciones inicial / final deben ser
+  /// par, para que no haya una pared inicial con mas de un bloque de grosor. 
+  /// Tenerlo no me molesta por lo que no estoy aplicando esta restriccion en el código
+  /// </summary>
+  public int logicalSize;   // Si = 5, size = 11 (grid 11x11)
+  /// <summary>
   /// Array que almacena si una posicion dentro del laberinto esta ocupada o no
   /// </summary>
   public bool[,] maze;
@@ -40,67 +47,96 @@ public class MazeGenerator {
 
   #endregion
 
-  #region Metodos
+  #region Metodos Principales
 
   /// <summary>
   /// Constructor de la clase
   /// </summary>
-  /// <param name="size">Tamaño NxN que va tener el laberinto</param>
+  /// <param name="size">Tamaño del grid</param>
   public MazeGenerator(int size) {
     this.size = size;
-    maze = new bool[size, size]; // false = wall, true = path
+    this.logicalSize = (size - 1) / 2;
+    maze = new bool[size, size];
   }
 
   /// <summary>
-  /// Genera el laberinto entre dos puntos, asegurando que se puede llegar del uno al otro
+  /// çPrepara el entorno del laberinto, llama su creación, inserta loops aleatorios y
+  /// se asegura de que las posiciones importantes se mantengan abiertos
   /// </summary>
-  /// <param name="start">Punto de partida</param>
-  /// <param name="end">Punto final</param>
-  /// <returns>Laberinto generado</returns>
-  public bool[,] GenerateMaze(Vector2Int start, Vector2Int end) {
-    // Paso 1: Llenamos todo el laberinto con muros (false)
+  /// <param name="startCell">Posicion Inicial</param>
+  /// <param name="endCell">Posicion Objetivo</param>
+  /// <param name="loopChance">Porcentaje de que hayan conexiones entre caminos</param>
+  /// <returns></returns>
+  public bool[,] GenerateMaze(Vector2Int startCell, Vector2Int endCell, float loopChance = 0.05f) {
+    int size = logicalSize * 2 + 1;
+
+    // Llenamos todo el grid con paredes, asignando el valor false
     for (int x = 0; x < size; x++) {
       for (int y = 0; y < size; y++) {
         maze[x, y] = false;
-      }          
+      }        
     }
 
-    // Paso 2: Generamos un camino entre el punto de partida y el final
-    HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
-    CarvePathDFS(start, end, visited);
+    var visited = new HashSet<Vector2Int>();
+    CarveMaze(startCell, visited);
+    AddRandomLoops(loopChance);
 
-    // Paso 3: Devolvemos el resultado
+    // Aseguramos de que la celda inicial y final esten abiertos
+    maze[startCell.x, startCell.y] = true;
+    maze[endCell.x, endCell.y] = true;
+
     return maze;
   }
 
   /// <summary>
-  /// Algoritmo DFS que trata de encontrar un camino válido entre los dos puntos
+  /// Genera el laberinto
   /// </summary>
-  /// <param name="current">Posición actual</param>
-  /// <param name="target">Posición destino</param>
-  /// <param name="visited">Posiciones Visitadas</param>
-  /// <returns>True si se ha encontrado un camino valido</returns>
-  private bool CarvePathDFS(Vector2Int current, Vector2Int target, HashSet<Vector2Int> visited) {
+  /// <param name="current">La posición actual</param>
+  /// <param name="visited">Lista de posiciones ya visitadas</param>
+  private void CarveMaze(Vector2Int current, HashSet<Vector2Int> visited) {
     visited.Add(current);
     maze[current.x, current.y] = true;
 
-    if (current == target) return true;
-        
     Shuffle(directions);
 
     foreach (var dir in directions) {
-      Vector2Int next = current + dir;
+      Vector2Int next = current + dir * 2;
+      Vector2Int between = current + dir;
 
       if (IsInInnerBounds(next) && !visited.Contains(next)) {
-        if (CarvePathDFS(next, target, visited)) {
-          return true;
+        maze[between.x, between.y] = true;  // carve wall between
+        CarveMaze(next, visited);
+      }
+    }
+  }
+
+  /// <summary>
+  /// Genera loops aleatorios dentro del laberinto generado
+  /// </summary>
+  /// <param name="chance">Probabilidad (en decimales) de que haya un loop</param>
+  private void AddRandomLoops(float chance = 0.05f) {
+    int size = logicalSize * 2 + 1;
+
+    for (int x = 1; x < size - 1; x++) {
+      for (int y = 1; y < size - 1; y++) {
+        if (x % 2 == 1 || y % 2 == 1) continue; // Only look at wall positions
+
+        if (!maze[x, y] && rng.NextDouble() < chance) {
+          // Only open wall if it connects two different paths
+          int connections = 0;
+          if (maze[x + 1, y]) connections++;
+          if (maze[x - 1, y]) connections++;
+          if (maze[x, y + 1]) connections++;
+          if (maze[x, y - 1]) connections++;
+          if (connections == 2) maze[x, y] = true;
         }
       }
     }
-
-    // No hay camino por esta avenida
-    return false;
   }
+
+  #endregion
+
+  #region Metodos Aux
 
   /// <summary>
   /// Asegura que seguimos dentro del espacio permitido por las restricciones del laberinto

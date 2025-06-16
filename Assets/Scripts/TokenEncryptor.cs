@@ -1,3 +1,12 @@
+/**
+* Universidad de La Laguna
+* Proyecto: Roblockly-Android
+* Autor: Thomas Edward Bradley
+* Email: alu0101408248@ull.edu.es
+* Fecha: 15/06/2025
+* Descripcion: Clase encargada de encriptar y desencriptar un token de seguridad de GitHub
+*/
+
 using UnityEngine;
 
 public class TokenEncryptor : MonoBehaviour {
@@ -23,8 +32,8 @@ public class TokenEncryptor : MonoBehaviour {
   /// </summary>
   /// <returns>El token encriptado</returns>
   public string EncryptString() {
-    string input = encryptedToken;
     System.Text.StringBuilder builder = new System.Text.StringBuilder();
+    string input = encryptedToken;
 
     foreach (char c in input) {
       char shifted = (char)(c + encryptionInt);
