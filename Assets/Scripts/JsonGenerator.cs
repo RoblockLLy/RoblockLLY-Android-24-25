@@ -42,9 +42,10 @@ public class JsonGenerator : MonoBehaviour {
   //  [0] Goal
   //  [1] Car
   //  [2] Wall
-  //  [3] Slide Wall
-  //  [4] Plate
+  //  [3] Interactable Wall
+  //  [4] Pressure Plate
   //  [5] Path
+  //  [6] Color
 
   /// <summary>
   /// Tamaño del nivel a generar, NxN
@@ -82,9 +83,31 @@ public class JsonGenerator : MonoBehaviour {
   /// </summary>
   private Coord maxStart;
 
+  /// <summary>
+  /// Listado de todos los posibles colores
+  /// </summary>
+  private List<string> colorList = new List<string> {
+    "White",
+    "Light Red",
+    "Red",
+    "Orange",
+    "Light Orange",
+    "Yellow",
+    "Green",
+    "Light Green",
+    "Turquoise",
+    "Light Blue",
+    "Blue",
+    "Purple",
+    "Pink",
+    "Brown",
+    "Gray",
+    "Black"
+  };
+
   #endregion
 
-  #region Build JSON
+  #region JSON
 
   /// <summary>
   /// Crea un nivel personalizado en base a las opciones que estan guardados en la clase
@@ -96,20 +119,24 @@ public class JsonGenerator : MonoBehaviour {
     setupCoordValues();           // Para dejar meta y jugador en posiciones adecuadas
 
     int count = 0;          // Contador para asignar nombres unicos a objetos
+    string color;           // Facilita la opcion de "Color Explosion"
     const string wallColor = "Black", floorColor = "Light Orange";
     JArray flags = new JArray(), spawnpoints = new JArray(), export = new JArray();
     Coord doorCoord01 = new Coord(), plateCoord01 = new Coord(), flagCoord = new Coord(), startCoord = new Coord();
 
     if (activeObject[3]) {  // Pared Interactuable
       Coord pos = doorCoord01 = generateRandomPos(2, levelSize - 2, 2, levelSize - 2);  // -2 porque no puede ir en los laterales
-      export.Add(buildJSON(objects[3].name + " " + count.ToString(), new Vector3(pos.xVal, 1, pos.yVal), new Quaternion(0 ,0 ,0 ,1), "Turquoise"));
+      color = activeObject[6] ? generateRandomColor() : "Turquoise";
+      export.Add(buildJSON(objects[3].name + " " + count.ToString(), new Vector3(pos.xVal, 1, pos.yVal), new Quaternion(0 ,0 ,0 ,1), color));
 
       Coord platePos = plateCoord01 = generateRandomPos(1, levelSize - 1, pos.yVal + 1, levelSize - 1);  // Placa para activar pared
-      export.Add(buildJSON("Pressure Plate " + count.ToString(), new Vector3(platePos.xVal, 1, platePos.yVal), new Quaternion(0 ,0 ,0 ,1), "White", count));
+      color = activeObject[6] ? generateRandomColor() : "White";
+      export.Add(buildJSON("Pressure Plate " + count.ToString(), new Vector3(platePos.xVal, 1, platePos.yVal), new Quaternion(0 ,0 ,0 ,1), color, count));
 
       for (int i = 1; i < levelSize - 1; i++) { // Construimos paredes horizontales
         if (i == pos.xVal) continue;
-        export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 1, pos.yVal), new Quaternion(0 ,0 ,0 ,1), wallColor));
+        color = activeObject[6] ? generateRandomColor() : wallColor; 
+        export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 1, pos.yVal), new Quaternion(0 ,0 ,0 ,1), color));
         usedPositions.Add(new Coord { xVal = i, yVal = pos.yVal });
         count++;
       }
@@ -145,7 +172,8 @@ public class JsonGenerator : MonoBehaviour {
         for (int y = 1; y < levelSize - 1; y++) {
           if (!maze[x, y]) {
             usedPositions.Add(new Coord { xVal = x, yVal = y } );
-            export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(x, 1, y), new Quaternion(0 ,0 ,0 ,1), wallColor));
+            color = activeObject[6] ? generateRandomColor() : wallColor;
+            export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(x, 1, y), new Quaternion(0 ,0 ,0 ,1), color));
             count++;
           } 
         }
@@ -169,30 +197,31 @@ public class JsonGenerator : MonoBehaviour {
         if (i != 0) tempPath.RemoveAt(0);
         path.AddRange(tempPath);
       }
-
+      
       for (int i = 0; i < path.Count; i++) { // Iteramos el camino para añadir el elemento correcto con la orientación correcta
+        color = activeObject[6] ? generateRandomColor() : "White";
         Coord pos = path[i];
         if (i == 0) { // Punto de Partida, pieza recta
           Coord next = path[i + 1];
           Quaternion rotation = Quaternion.Euler(0f, 0f, 0f);
           if (next.xVal != pos.xVal) rotation = Quaternion.Euler(0f, 270f, 0f);
-          export.Add(buildJSON("Straight Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation));
+          export.Add(buildJSON("Straight Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation, color));
         } else if (i != path.Count - 1) { // Secuencia principal entre punto de partida y final
           Coord next = path[i + 1];
           Coord prev = path[i - 1];
           if (prev.xVal != next.xVal && prev.yVal != next.yVal) {     // Pieza esquina           
             Quaternion rotation = getCornerRotation(prev, pos, next); // Obtener orientación de la esquina
-            export.Add(buildJSON("Corner Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation));
+            export.Add(buildJSON("Corner Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation, color));
           } else {  // Pieza recta dentro de la secuencia
             Quaternion rotation = Quaternion.Euler(0f, 0f, 0f);
             if (next.xVal != pos.xVal) rotation = Quaternion.Euler(0f, 270f, 0f);
-            export.Add(buildJSON("Straight Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation));
+            export.Add(buildJSON("Straight Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation, color));
           }
         } else {  // Objetivo, pieza recta
           Coord prev = path[i - 1];
           Quaternion rotation = Quaternion.Euler(0f, 0f, 0f);
           if (prev.xVal != pos.xVal) rotation = Quaternion.Euler(0f, 270f, 0f);
-          export.Add(buildJSON("Straight Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation));
+          export.Add(buildJSON("Straight Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation, color));
         }
         count++;  // Incrementar Contador
       }
@@ -201,11 +230,13 @@ public class JsonGenerator : MonoBehaviour {
     for (int i = 0; i < levelSize; i++) { // Paredes externas y Suelo
       for (int j = 0; j < levelSize; j++) {
         if (i != 0 && i != levelSize - 1 && j != 0 && j != levelSize - 1) { // No hace falta meter el suelo en posiciones usadas
-          export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 0, j), new Quaternion(0 ,0 ,0 ,1), floorColor));
+          color = activeObject[6] ? generateRandomColor() : floorColor;
+          export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 0, j), new Quaternion(0 ,0 ,0 ,1), color));
           count++;
           continue;
         }
-        export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 1, j), new Quaternion(0 ,0 ,0 ,1), wallColor));
+        color = activeObject[6] ? generateRandomColor() : wallColor;
+        export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 1, j), new Quaternion(0 ,0 ,0 ,1), color));
         count++;
       }
     }
@@ -275,48 +306,9 @@ public class JsonGenerator : MonoBehaviour {
     return json;
   }
 
-  /// <summary>
-  /// Genera una cordenada aleatoria en el nivel que no este en uso y que cumnpla con las restricciones de posición
-  /// </summary>
-  /// <param name="minX">Minimo valor que debe tener X, puede ser igual</param>
-  /// <param name="maxX">Maximo valor que debe tener X</param>
-  /// <param name="minY">Minimo valor que debe tener Y, puede ser igual</param>
-  /// <param name="maxY">Maximo valor que debe tener Y</param>
-  /// <returns>Coordenada generada</returns>
-  private Coord generateRandomPos(int minX = 1, int maxX = -1, int minY = 1, int maxY = -1) {
-    if (maxX == -1) maxX = levelSize - 1;
-    if (maxY == -1) maxY = levelSize - 1;
-    System.Random rnd = new System.Random();
-    bool found = false;
-
-    while (!found) {      
-      int xCoord, yCoord;
-      xCoord = (minX == maxX) ? minX : rnd.Next(minX, maxX);  // En el caso de 4, n >= 1 & n < 4
-      yCoord = (minY == maxY) ? minY : rnd.Next(minY, maxY);
-      Coord generated = new Coord { xVal = xCoord, yVal = yCoord };
-      
-      if (!usedPositions.Contains(generated)) {
-        usedPositions.Add(new Coord { xVal = xCoord, yVal = yCoord });
-        found = true;
-      }
-    }
-
-    return usedPositions.Last();
-  }
-
-  /// <summary>
-  /// Asigna las posiciones minimas/maximas de nuestros puntos iniciales y finales a sus valores originales
-  /// </summary>
-  private void setupCoordValues() {
-    minFlag = new Coord { xVal = 1, yVal = 1 };
-    maxFlag = new Coord { xVal = levelSize - 1, yVal = levelSize - 1 };
-    minStart = new Coord { xVal = 1, yVal = 1 };
-    maxStart = new Coord { xVal = levelSize - 1, yVal = levelSize - 1 };
-  }
-
   #endregion
 
-  #region Path Generation
+  #region Generacion Camino
 
   /// <summary>
   /// Prepara el entorno para llamar al metodo recursivo que encontrara un camino entre dos puntos
@@ -432,7 +424,56 @@ public class JsonGenerator : MonoBehaviour {
 
   #endregion
 
-  #region Helper Methods
+  #region Metodos Aux
+
+  /// <summary>
+  /// Genera una cordenada aleatoria en el nivel que no este en uso y que cumnpla con las restricciones de posición
+  /// </summary>
+  /// <param name="minX">Minimo valor que debe tener X, puede ser igual</param>
+  /// <param name="maxX">Maximo valor que debe tener X</param>
+  /// <param name="minY">Minimo valor que debe tener Y, puede ser igual</param>
+  /// <param name="maxY">Maximo valor que debe tener Y</param>
+  /// <returns>Coordenada generada</returns>
+  private Coord generateRandomPos(int minX = 1, int maxX = -1, int minY = 1, int maxY = -1) {
+    if (maxX == -1) maxX = levelSize - 1;
+    if (maxY == -1) maxY = levelSize - 1;
+    System.Random rnd = new System.Random();
+    bool found = false;
+
+    while (!found) {      
+      int xCoord, yCoord;
+      xCoord = (minX == maxX) ? minX : rnd.Next(minX, maxX);  // En el caso de 4, n >= 1 & n < 4
+      yCoord = (minY == maxY) ? minY : rnd.Next(minY, maxY);
+      Coord generated = new Coord { xVal = xCoord, yVal = yCoord };
+      
+      if (!usedPositions.Contains(generated)) {
+        usedPositions.Add(new Coord { xVal = xCoord, yVal = yCoord });
+        found = true;
+      }
+    }
+
+    return usedPositions.Last();
+  }
+
+  /// <summary>
+  /// Genera un color aleatorio en base a la lista de colores que tenemos guardado
+  /// </summary>
+  /// <returns>String del color elegido</returns>
+  private string generateRandomColor() {
+    System.Random rnd = new System.Random();
+    int val = rnd.Next(0, colorList.Count);
+    return colorList[val];
+  }
+
+  /// <summary>
+  /// Asigna las posiciones minimas/maximas de nuestros puntos iniciales y finales a sus valores originales
+  /// </summary>
+  private void setupCoordValues() {
+    minFlag = new Coord { xVal = 1, yVal = 1 };
+    maxFlag = new Coord { xVal = levelSize - 1, yVal = levelSize - 1 };
+    minStart = new Coord { xVal = 1, yVal = 1 };
+    maxStart = new Coord { xVal = levelSize - 1, yVal = levelSize - 1 };
+  }
 
   /// <summary>
   /// Setter: Copia una lista pasada con los objetos activados, que debemos incluir en nuestro nivel generado
