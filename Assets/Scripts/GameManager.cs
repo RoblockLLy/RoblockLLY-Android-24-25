@@ -24,6 +24,8 @@ public class GameManager : MonoBehaviour {
   [Header("Elementos UI")]
   [SerializeField] [Tooltip("Form UI para cuando se esta haciendo el scan")]
   public GameObject panelScan;
+  [SerializeField] [Tooltip("Form UI para cuando se ha intentado subir un scan sin tener la bandera y el coche")]
+  public GameObject panelMissingScans;
   [SerializeField] [Tooltip("Form UI para cuando se ha hecho el scan")]
   public GameObject panelInfo;
   [SerializeField] [Tooltip("Form UI para cuando se ha introducido toda la información adicional")]
@@ -67,7 +69,13 @@ public class GameManager : MonoBehaviour {
       if (panelExport.activeSelf) panelExport.SetActive(false);
       if (panelError.activeSelf) panelError.SetActive(false);
     } else {                      // Avanzar al Panel de Información Adicional
+      if (!checkValidScans()) {   // Comprobamos de que estan la bandera y el coche
+        panelMissingScans.SetActive(true);
+        return;
+      }
+      
       panelScan.SetActive(false); // Necesario ocultar porque interactua mal con el Dropdown de Skybox
+      if (panelMissingScans.activeSelf) panelMissingScans.SetActive(false);
       panelInfo.SetActive(true);
     }
   }
@@ -79,7 +87,7 @@ public class GameManager : MonoBehaviour {
   public void CodePanel() {
     if (panelExport.activeSelf) {
       panelExport.SetActive(false);
-    } else {
+    } else {      
       int counter = 0;
       bool succesful = false;
       jsonBuilder.setActiveObjects(activeObjects);
@@ -94,13 +102,20 @@ public class GameManager : MonoBehaviour {
         } else {                              // Se ha producido un error con la generación
           counter++;
         } 
-        Debug.Log("Counter: " + counter);
+        // Debug.Log("Counter: " + counter);
       }
 
       if (!succesful) {  // Hubo errores con las 5 generaciones
         panelError.SetActive(true);
       } 
     }
+  }
+
+  /// <summary>
+  /// Se encarga de cerrar el panel de aviso sobre scans ausentes
+  /// </summary>
+  public void CloseMissingScansPanel() {
+    if (panelMissingScans.activeSelf) panelMissingScans.SetActive(false);
   }
 
   /// <summary>
@@ -150,7 +165,15 @@ public class GameManager : MonoBehaviour {
 
   #endregion
 
-  #region Extra Buttons
+  #region Metodos Aux
+
+  /// <summary>
+  /// Averigua si estan activos tanto la bandera como el coche
+  /// </summary>
+  /// <returns>True si ambos estan activos</returns>
+  public bool checkValidScans() {
+    return activeObjects[0] && activeObjects[1];
+  }
 
   /// <summary>
   /// Deseamos subir nuestro nivel creado al repositorio de GitHub
