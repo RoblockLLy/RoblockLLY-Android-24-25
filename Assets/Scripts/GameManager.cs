@@ -80,13 +80,24 @@ public class GameManager : MonoBehaviour {
     if (panelExport.activeSelf) {
       panelExport.SetActive(false);
     } else {
+      int counter = 0;
+      bool succesful = false;
       jsonBuilder.setActiveObjects(activeObjects);
-      string result = jsonBuilder.buildExport();
 
-      if (!string.IsNullOrEmpty(result)) {
-        exportText.text = finishedLevelText = result;
-        panelExport.SetActive(true);
-      } else {  // Se ha producido un error con la generación
+      while (counter < 5 && !succesful) {     // Se realizan hasta 5 generacione si hace falta, protección contra generación camino
+        string result = jsonBuilder.buildExport();
+
+        if (!string.IsNullOrEmpty(result)) {  // Generación éxitosa
+          succesful = true;
+          exportText.text = finishedLevelText = result;
+          panelExport.SetActive(true);
+        } else {                              // Se ha producido un error con la generación
+          counter++;
+        } 
+        Debug.Log("Counter: " + counter);
+      }
+
+      if (!succesful) {  // Hubo errores con las 5 generaciones
         panelError.SetActive(true);
       } 
     }
@@ -148,6 +159,10 @@ public class GameManager : MonoBehaviour {
     uploader.UploadTextAsFile(finishedLevelText);
   }
 
+  /// <summary>
+  /// Método usado por la clase GithubUpload para comunicar si se ha tenido éxito con la subida del nivel
+  /// </summary>
+  /// <param name="status">True si la subida del fichero fue éxitoso</param>
   public void submissionResult(bool status) {
     if (status) {
       panelExport.SetActive(false);
