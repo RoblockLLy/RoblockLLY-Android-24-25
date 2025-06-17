@@ -18,8 +18,12 @@ public class GitHubUploader : MonoBehaviour {
   
   #region Atributos
 
+  [Header("Object References")]
+  [SerializeField] [Tooltip("GameManager para que pueda recibir el estado del proceso")]
+  public GameManager gameManager;
+
   [Header("GitHub Settings")]
-  [SerializeField] [Tooltip("Nombre del usuario propietario que creo el repositorio a buscar")]
+  [SerializeField] [Tooltip("Nombre del usuario propietario (u organización) que creo el repositorio a buscar")]
   public string repoOwner = "your-username";
   [SerializeField] [Tooltip("Nombre del repositorio al que deseamos subir el nivel")]
   public string repoName = "your-repo";
@@ -45,7 +49,7 @@ public class GitHubUploader : MonoBehaviour {
   /// <param name="textToUpload">Texto JSON con el nivel generado</param>
   public void UploadTextAsFile(string textToUpload) {
     // Generate a random filename
-    string randomFileName = $"submission_{Guid.NewGuid().ToString("N").Substring(0, 8)}.txt";
+    string randomFileName = $"submission_{Guid.NewGuid().ToString("N").Substring(0, 8)}.json";
     string targetPathInRepo = string.IsNullOrEmpty(folderInRepo) ? randomFileName : $"{folderInRepo}/{randomFileName}";
 
     // Encode content in Base64
@@ -94,9 +98,11 @@ public class GitHubUploader : MonoBehaviour {
     yield return uploadRequest.SendWebRequest();
 
     if (uploadRequest.result != UnityWebRequest.Result.Success) {
+      gameManager.submissionResult(false);
       Debug.LogError("Upload failed: " + uploadRequest.error + "\n" + uploadRequest.downloadHandler.text);
     } else {
-      Debug.Log($"File uploaded successfully to: {pathInRepo}");
+      gameManager.submissionResult(true);
+      Debug.Log($"✅ Archivo .json subido exitosamente a: {pathInRepo}");
     }
   }
 

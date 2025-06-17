@@ -22,8 +22,7 @@ public class MazeGenerator {
   /// <summary>
   /// Tamaño excluyendo los bloques separadores, tiene la formula size * 2 + 1
   /// Size siempre debe ser un numero impar y las posiciones inicial / final deben ser
-  /// par, para que no haya una pared inicial con mas de un bloque de grosor. 
-  /// Tenerlo no me molesta por lo que no estoy aplicando esta restriccion en el código
+  /// par, esto lo aseguramos en el código de JSON generator
   /// </summary>
   public int logicalSize;   // Si = 5, size = 11 (grid 11x11)
   /// <summary>
@@ -63,11 +62,10 @@ public class MazeGenerator {
   /// çPrepara el entorno del laberinto, llama su creación, inserta loops aleatorios y
   /// se asegura de que las posiciones importantes se mantengan abiertos
   /// </summary>
-  /// <param name="startCell">Posicion Inicial</param>
-  /// <param name="endCell">Posicion Objetivo</param>
+  /// <param name="startCell">Posicion Inicial del laberinto (1, 1)</param>
   /// <param name="loopChance">Porcentaje de que hayan conexiones entre caminos</param>
   /// <returns></returns>
-  public bool[,] GenerateMaze(Vector2Int startCell, Vector2Int endCell, float loopChance = 0.05f) {
+  public bool[,] GenerateMaze(Vector2Int startCell, float loopChance = 0.05f) {
     int size = logicalSize * 2 + 1;
 
     // Llenamos todo el grid con paredes, asignando el valor false
@@ -80,10 +78,6 @@ public class MazeGenerator {
     var visited = new HashSet<Vector2Int>();
     CarveMaze(startCell, visited);
     AddRandomLoops(loopChance);
-
-    // Aseguramos de que la celda inicial y final esten abiertos
-    maze[startCell.x, startCell.y] = true;
-    maze[endCell.x, endCell.y] = true;
 
     return maze;
   }

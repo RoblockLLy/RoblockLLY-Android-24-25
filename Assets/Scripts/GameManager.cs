@@ -28,6 +28,8 @@ public class GameManager : MonoBehaviour {
   public GameObject panelInfo;
   [SerializeField] [Tooltip("Form UI para cuando se ha introducido toda la información adicional")]
   public GameObject panelExport;
+  [SerializeField] [Tooltip("Form UI para cuando se ha subido un nivel al repositorio con éxito")]
+  public GameObject panelSubmited;
   [SerializeField] [Tooltip("Form UI para cuando ha ocurrido un error con la generación del nivel")]
   public GameObject panelError;
   [SerializeField] [Tooltip("Campo donde mostrar el código completado del nivel")]
@@ -91,6 +93,13 @@ public class GameManager : MonoBehaviour {
   }
 
   /// <summary>
+  /// Se encarga de cerrar el panel de subida de nivel éxitosa
+  /// </summary>
+  public void CloseSubmitedPanel() {
+    if (panelSubmited.activeSelf) panelSubmited.SetActive(false);
+  }
+
+  /// <summary>
   /// Se encarga de cerrar el panel de Error
   /// </summary>
   public void CloseErrorPanel() {
@@ -137,6 +146,15 @@ public class GameManager : MonoBehaviour {
   /// </summary>
   public void submitGeneratedLevel() {
     uploader.UploadTextAsFile(finishedLevelText);
+  }
+
+  public void submissionResult(bool status) {
+    if (status) {
+      panelExport.SetActive(false);
+      panelSubmited.SetActive(true);
+    } else {
+      panelError.SetActive(true);
+    }
   }
 
   #endregion

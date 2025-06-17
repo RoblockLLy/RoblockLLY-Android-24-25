@@ -145,6 +145,22 @@ public class JsonGenerator : MonoBehaviour {
       minStart.yVal = pos.yVal + 1;
     }
 
+    if (activeObject[2]) {  // Laberinto
+      MazeGenerator generator = new MazeGenerator(levelSize);
+      bool[,] maze = generator.GenerateMaze(new Vector2Int(1, 1));  // Empezamos la generación en (1, 1)
+
+      for (int x = 1; x < levelSize - 1; x++) {
+        for (int y = 1; y < levelSize - 1; y++) {
+          if (!maze[x, y]) {
+            usedPositions.Add(new Coord { xVal = x, yVal = y } );
+            color = activeObject[6] ? generateRandomColor() : wallColor;
+            export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(x, 1, y), new Quaternion(0 ,0 ,0 ,1), color));
+            count++;
+          } 
+        }
+      }
+    }
+
     if (activeObject[0]) {  // Objetivo / Bandera
       Coord pos = flagCoord = generateRandomPos(minFlag.xVal, maxFlag.xVal, minFlag.yVal, maxFlag.yVal);
       flags.Add(buildJSON(objects[0].name + " 0", new Vector3(pos.xVal, 1, pos.yVal), new Quaternion(0 ,0 ,0 ,1)));
@@ -159,25 +175,6 @@ public class JsonGenerator : MonoBehaviour {
       int randomPos = rnd.Next(0, degrees.Count);
       // Lo añadimos al JSON
       spawnpoints.Add(buildJSON(objects[1].name + " 0", new Vector3(pos.xVal, 1, pos.yVal), Quaternion.Euler(0f, degrees[randomPos], 0f)));
-    }
-
-    if (activeObject[2]) {  // Laberinto
-      Vector2Int start = new Vector2Int(startCoord.xVal, startCoord.yVal);
-      Vector2Int end = new Vector2Int(flagCoord.xVal, flagCoord.yVal);
-
-      MazeGenerator generator = new MazeGenerator(levelSize);
-      bool[,] maze = generator.GenerateMaze(start, end);
-
-      for (int x = 1; x < levelSize - 1; x++) {
-        for (int y = 1; y < levelSize - 1; y++) {
-          if (!maze[x, y]) {
-            usedPositions.Add(new Coord { xVal = x, yVal = y } );
-            color = activeObject[6] ? generateRandomColor() : wallColor;
-            export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(x, 1, y), new Quaternion(0 ,0 ,0 ,1), color));
-            count++;
-          } 
-        }
-      }
     }
 
     if (activeObject[5]) {  // Camino
@@ -256,6 +253,7 @@ public class JsonGenerator : MonoBehaviour {
     try {
       int temp = int.Parse(sizeText.text);
       levelSize = temp < minGridSize ? minGridSize : temp;
+      if (activeObject[2] && levelSize % 2 == 0) levelSize += 1;  // Si tenemos laberinto, queremos que el tamaño sea impar
     } catch {
       Debug.LogWarning("Size Input was not a valid number");
       levelSize = minGridSize;
