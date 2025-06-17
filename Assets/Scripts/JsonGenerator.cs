@@ -123,27 +123,57 @@ public class JsonGenerator : MonoBehaviour {
     string color;           // Facilita la opcion de "Color Explosion"
     const string wallColor = "Black", floorColor = "Light Orange";
     JArray flags = new JArray(), spawnpoints = new JArray(), export = new JArray();
-    Coord doorCoord01 = new Coord(), plateCoord01 = new Coord(), flagCoord = new Coord(), startCoord = new Coord();
+    Coord doorCoord01 = new Coord(), doorCoord02 = new Coord(), plateCoord01 = new Coord(), plateCoord02 = new Coord(); 
+    Coord flagCoord = new Coord(), startCoord = new Coord();
 
-    if (activeObject[3]) {  // Pared Interactuable
-      Coord pos = doorCoord01 = generateRandomPos(2, levelSize - 2, 2, levelSize - 2);  // -2 porque no puede ir en los laterales
+    if (activeObject[3] && activeObject[4]) { // Si ambas paredes estan activas, hay que preparar las coordenadas conjuntamente
+      doorCoord01 = generateRandomPos(2, levelSize - 3, 2, levelSize - 3);  // -3 Teniendo en cuenta que se puede generar una nueva pared tras ella
+      doorCoord02 = generateRandomPos(doorCoord01.xVal + 1, levelSize - 2, doorCoord01.yVal + 1, levelSize - 2);
+      plateCoord01 = generateRandomPos(1, doorCoord02.xVal, doorCoord01.yVal + 1, levelSize - 1);
+      plateCoord02 = generateRandomPos(doorCoord02.xVal + 1, levelSize - 1, doorCoord01.yVal + 1, levelSize - 1);
+    }
+
+    if (activeObject[3]) {  // Pared Interactiva (horizontal)
+      // Si activeObject[4] ya se han preparado las coordenadas
+      if (!activeObject[4]) doorCoord01 = generateRandomPos(2, levelSize - 2, 2, levelSize - 2);  // -2 porque no puede ir en los laterales
       color = activeObject[6] ? generateRandomColor() : activeObject[7] ? "White" : "Turquoise";
-      export.Add(buildJSON(objects[3].name + " " + count.ToString(), new Vector3(pos.xVal, 1, pos.yVal), new Quaternion(0 ,0 ,0 ,1), color));
+      export.Add(buildJSON(objects[3].name + " " + count.ToString(), new Vector3(doorCoord01.xVal, 1, doorCoord01.yVal), new Quaternion(0 ,0 ,0 ,1), color));
 
-      Coord platePos = plateCoord01 = generateRandomPos(1, levelSize - 1, pos.yVal + 1, levelSize - 1);  // Placa para activar pared
-      color = activeObject[6] ? generateRandomColor() : "White";
-      export.Add(buildJSON("Pressure Plate " + count.ToString(), new Vector3(platePos.xVal, 1, platePos.yVal), new Quaternion(0 ,0 ,0 ,1), color, count));
+      if (!activeObject[4]) plateCoord01 = generateRandomPos(1, levelSize - 1, doorCoord01.yVal + 1, levelSize - 1);  // Placa para activar pared
+      export.Add(buildJSON("Pressure Plate " + count.ToString(), new Vector3(plateCoord01.xVal, 1, plateCoord01.yVal), new Quaternion(0 ,0 ,0 ,1), "", count));
 
       for (int i = 1; i < levelSize - 1; i++) { // Construimos paredes horizontales
-        if (i == pos.xVal) continue;
-        color = activeObject[6] ? generateRandomColor() : wallColor; 
-        export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 1, pos.yVal), new Quaternion(0 ,0 ,0 ,1), color));
-        usedPositions.Add(new Coord { xVal = i, yVal = pos.yVal });
+        if (i == doorCoord01.xVal) continue;
+        color = activeObject[6] ? generateRandomColor() : activeObject[7] ? "Black" : wallColor; 
+        export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 1, doorCoord01.yVal), new Quaternion(0 ,0 ,0 ,1), color));
+        usedPositions.Add(new Coord { xVal = i, yVal = doorCoord01.yVal });
         count++;
       }
 
-      maxFlag.yVal = pos.yVal;
-      minStart.yVal = pos.yVal + 1;
+      maxFlag.yVal = doorCoord01.yVal;
+      minStart.yVal = doorCoord01.yVal + 1;
+    }
+
+    if (activeObject[4]) {  // Place Presionable (pared interactiva vertical)
+      // Si activeObject[3] ya se han preparado las coordenadas
+      if (!activeObject[3]) doorCoord02 = generateRandomPos(2, levelSize - 2, 2, levelSize - 2);  // -2 porque no puede ir en los laterales
+      color = activeObject[6] ? generateRandomColor() : activeObject[7] ? "White" : "Red";
+      export.Add(buildJSON(objects[3].name + " " + count.ToString(), new Vector3(doorCoord02.xVal, 1, doorCoord02.yVal), Quaternion.Euler(0f, 90f, 0f), color));
+
+      if (!activeObject[3]) plateCoord02 = generateRandomPos(doorCoord02.xVal + 1, levelSize - 1, 1, levelSize - 1);  // Placa para activar pared 
+      export.Add(buildJSON("Pressure Plate " + count.ToString(), new Vector3(plateCoord02.xVal, 1, plateCoord02.yVal), new Quaternion(0 ,0 ,0 ,1), "", count));
+
+      for (int i = 1; i < levelSize - 1; i++) { // Construimos paredes horizontales
+        if (i == doorCoord02.yVal) continue;
+        if (usedPositions.Contains(new Coord() { xVal = doorCoord02.xVal, yVal = i })) continue;
+        color = activeObject[6] ? generateRandomColor() : activeObject[7] ? "Black" : wallColor; 
+        export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(doorCoord02.xVal, 1, i), new Quaternion(0 ,0 ,0 ,1), color));
+        usedPositions.Add(new Coord { xVal = doorCoord02.xVal, yVal = i });
+        count++;
+      }
+
+      maxFlag.xVal = doorCoord02.xVal;
+      minStart.xVal = doorCoord02.xVal + 1;
     }
 
     if (activeObject[2]) {  // Laberinto
@@ -181,11 +211,18 @@ public class JsonGenerator : MonoBehaviour {
     if (activeObject[5]) {  // Camino
       List<Coord> path = new List<Coord>();
       List<Coord> stops = new List<Coord> { startCoord };
-      if (activeObject[3]) {            // Si hay una puerta, el camino debe pasar tanto por la puerta como la placa de presión
-        stops.Add(plateCoord01);
-        stops.Add(doorCoord01);
-      } else if (!activeObject[2]) {    // Si es un laberinto no añadimos un punto de por medio
-        stops.Add(generateRandomPos()); // Quitar esta linea para no tener punto por medio en generaciones normales
+
+      if (activeObject[3] || activeObject[4]) { // Si hay una puerta, el camino debe pasar tanto por la puerta como la placa de presión
+        if (activeObject[4]) {                  // Puerta vertical debe ir primero, para el caso de que las 2 esten puestas
+          stops.Add(plateCoord02);
+          stops.Add(doorCoord02);
+        }
+        if (activeObject[3]) {
+          stops.Add(plateCoord01);
+          stops.Add(doorCoord01);
+        }
+      } else if (!activeObject[2]) {            // Si es un laberinto no añadimos un punto de por medio
+        stops.Add(generateRandomPos());         // Quitar esta linea para no tener punto por medio en generaciones normales
       }
       stops.Add(flagCoord);
 
