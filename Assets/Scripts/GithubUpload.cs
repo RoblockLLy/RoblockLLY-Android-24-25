@@ -27,7 +27,7 @@ public class GitHubUploader : MonoBehaviour {
   public string repoOwner = "your-username";
   [SerializeField] [Tooltip("Nombre del repositorio al que deseamos subir el nivel")]
   public string repoName = "your-repo";
-  [SerializeField] [Tooltip("Dirección dentro del directorio en el que queremos dejar el nivel")]
+  [SerializeField] [Tooltip("Dirección dentro del repositorio en el que queremos dejar el nivel")]
   public string folderInRepo = "uploads";
   [SerializeField] [Tooltip("Mensaje del commit que se dejara al subir el nivel")]
   public string commitMessage = "User submission";
@@ -40,7 +40,7 @@ public class GitHubUploader : MonoBehaviour {
 
   #endregion
 
-  #region Funciones GitHub
+  #region Escritura Repo
 
   /// <summary>
   /// Prepara la URL a la que queremos subir el texto y crea el nombre del fichero,
@@ -99,23 +99,23 @@ public class GitHubUploader : MonoBehaviour {
 
     if (uploadRequest.result != UnityWebRequest.Result.Success) {
       gameManager.submissionResult(false);
-      Debug.LogError("Upload failed: " + uploadRequest.error + "\n" + uploadRequest.downloadHandler.text);
+      Debug.LogError("Error con subida de fichero: " + uploadRequest.error + "\n" + uploadRequest.downloadHandler.text);
     } else {
       gameManager.submissionResult(true);
-      Debug.Log($"✅ Archivo .json subido exitosamente a: {pathInRepo}");
+      Debug.Log($"Archivo .json subido exitosamente a: {pathInRepo}");
     }
   }
 
   #endregion
 
-  #region Clases Adicionales
+  #region Clases Aux
 
   [Serializable]
   public class GitHubUploadRequest {
     public string message;
     public string content;
     public string branch;
-    public string sha; // Optional
+    public string sha;      // Optional
   }
 
   [Serializable]

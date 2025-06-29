@@ -7,6 +7,7 @@
 * Descripcion: Manager de los elementos UI y rasgos generales del proyecto
 */
 
+using System.Linq;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -30,6 +31,8 @@ public class GameManager : MonoBehaviour {
   public GameObject panelInfo;
   [SerializeField] [Tooltip("Form UI para cuando se ha introducido toda la información adicional")]
   public GameObject panelExport;
+  [SerializeField] [Tooltip("Panel UI donde se muestra el código generado para el nivel")]
+  public GameObject contentObject;
   [SerializeField] [Tooltip("Form UI para cuando se ha subido un nivel al repositorio con éxito")]
   public GameObject panelSubmited;
   [SerializeField] [Tooltip("Form UI para cuando ha ocurrido un error con la generación del nivel")]
@@ -98,6 +101,14 @@ public class GameManager : MonoBehaviour {
         if (!string.IsNullOrEmpty(result)) {  // Generación éxitosa
           succesful = true;
           exportText.text = finishedLevelText = result;
+
+          // CAMBIAR TAMAÑO DEL ESPACIO DE SCROLL DINAMICAMENTE          
+          GameObject inputField = contentObject.transform.Find("InputField (TMP)").gameObject;
+          int lineBreaks = finishedLevelText.Count(c => c == '\n');
+          float heightPerLine = 13.9f;  // Aproximadamente
+          contentObject.GetComponent<RectTransform>().sizeDelta = new Vector2(0f, heightPerLine * lineBreaks);
+          inputField.GetComponent<RectTransform>().sizeDelta = new Vector2(180f, heightPerLine * lineBreaks);
+          
           panelExport.SetActive(true);
         } else {                              // Se ha producido un error con la generación
           counter++;
@@ -193,6 +204,31 @@ public class GameManager : MonoBehaviour {
     } else {
       panelError.SetActive(true);
     }
+  }
+
+  /// <summary>
+  /// Activado cuando se pulsa sobre el boton de Copiar, llama al metodo de copiar con el codigo final generado
+  /// </summary>
+  public void copyCode() {
+    copyToClipboard(finishedLevelText);
+  }
+
+  /// <summary>
+  /// Copia el texto pasado para que el ussuario pueda pegarlo (ya sea en android o editor)
+  /// </summary>
+  /// <param name="text">Texto a copiar</param>
+  public void copyToClipboard(string text){
+    #if UNITY_ANDROID && !UNITY_EDITOR
+      AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+      AndroidJavaObject activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+
+      AndroidJavaObject clipboardManager = activity.Call<AndroidJavaObject>("getSystemService", "clipboard");
+      AndroidJavaClass clipDataClass = new AndroidJavaClass("android.content.ClipData");
+      AndroidJavaObject clip = clipDataClass.CallStatic<AndroidJavaObject>("newPlainText", "label", text);
+      clipboardManager.Call("setPrimaryClip", clip);
+    #else   // Para cuando se este usando Editor
+      GUIUtility.systemCopyBuffer = text; 
+    #endif
   }
 
   #endregion
