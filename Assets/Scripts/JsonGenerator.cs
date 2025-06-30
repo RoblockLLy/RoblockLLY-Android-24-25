@@ -14,14 +14,6 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 
-/// <summary>
-/// Struct que guarda la información pertinente a una Coordenada en un espacio 2D
-/// </summary>
-struct Coord {
-  public int xVal;
-  public int yVal;
-};
-
 public class JsonGenerator : MonoBehaviour {
   
   #region Atributos
@@ -65,24 +57,24 @@ public class JsonGenerator : MonoBehaviour {
   /// <summary>
   /// Posiciones en nuestro nivel que ya han sido ocupados por algun otro elemento importante
   /// </summary>
-  private List<Coord> usedPositions = new List<Coord>();
+  private List<Vector2Int> usedPositions = new List<Vector2Int>();
 
   /// <summary>
   /// Coordinada minimo de la bandera
   /// </summary>
-  private Coord minFlag;
+  private Vector2Int minFlag;
   /// <summary>
   /// Coordinada maximo de la bandera
   /// </summary>
-  private Coord maxFlag;
+  private Vector2Int maxFlag;
   /// <summary>
   /// Coordinada minimo del punto de partida
   /// </summary>
-  private Coord minStart;
+  private Vector2Int minStart;
   /// <summary>
   /// Coordinada maximo del punto de partida
   /// </summary>
-  private Coord maxStart;
+  private Vector2Int maxStart;
 
   /// <summary>
   /// Listado de todos los posibles colores
@@ -124,8 +116,8 @@ public class JsonGenerator : MonoBehaviour {
     string color;           // Facilita la opcion de "Color Explosion"
     const string wallColor = "Black", floorColor = "Light Orange";
     JArray flags = new JArray(), spawnpoints = new JArray(), export = new JArray();
-    Coord doorCoord01 = new Coord(), doorCoord02 = new Coord(), plateCoord01 = new Coord(), plateCoord02 = new Coord(); 
-    Coord flagCoord = new Coord(), startCoord = new Coord();
+    Vector2Int doorCoord01 = new Vector2Int(), doorCoord02 = new Vector2Int(), plateCoord01 = new Vector2Int(), plateCoord02 = new Vector2Int(); 
+    Vector2Int flagCoord = new Vector2Int(), startCoord = new Vector2Int();
     MazeGenerator storedMaze = new MazeGenerator(minGridSize);
 
     if (activeObject[2]) {  // Laberinto
@@ -136,7 +128,7 @@ public class JsonGenerator : MonoBehaviour {
       for (int x = 1; x < levelSize - 1; x++) {
         for (int y = 1; y < levelSize - 1; y++) {
           if (!maze[x, y]) {
-            usedPositions.Add(new Coord { xVal = x, yVal = y } );
+            usedPositions.Add(new Vector2Int(x, y));
             color = activeObject[6] ? (activeObject[7] ? generateBlackOrWhite() : generateRandomColor()) : (activeObject[7] ? "Black" : wallColor);
             export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(x, 1, y), new Quaternion(0 ,0 ,0 ,1), color));
             count++;
@@ -146,83 +138,83 @@ public class JsonGenerator : MonoBehaviour {
     } else {  // REGLAS PARA PAREDES INTERACTIVAS CUANDO NO HAY LABERINTO (despues de coche y laberinto)
       if (activeObject[3] && activeObject[4]) { // Si ambas paredes estan activas, hay que preparar las coordenadas conjuntamente
         doorCoord01 = generateRandomPos(2, levelSize - 3, 2, levelSize - 3);  // -3 Teniendo en cuenta que se puede generar una nueva pared tras ella
-        doorCoord02 = generateRandomPos(doorCoord01.xVal + 1, levelSize - 2, doorCoord01.yVal + 1, levelSize - 2);
-        plateCoord01 = generateRandomPos(1, doorCoord02.xVal, doorCoord01.yVal + 1, levelSize - 1);
-        plateCoord02 = generateRandomPos(doorCoord02.xVal + 1, levelSize - 1, doorCoord01.yVal + 1, levelSize - 1);
+        doorCoord02 = generateRandomPos(doorCoord01.x + 1, levelSize - 2, doorCoord01.y + 1, levelSize - 2);
+        plateCoord01 = generateRandomPos(1, doorCoord02.x, doorCoord01.y + 1, levelSize - 1);
+        plateCoord02 = generateRandomPos(doorCoord02.x + 1, levelSize - 1, doorCoord01.y + 1, levelSize - 1);
       }
 
       if (activeObject[3]) {  // Pared Interactiva (horizontal)
         // Si activeObject[4] ya se han preparado las coordenadas
         if (!activeObject[4]) doorCoord01 = generateRandomPos(2, levelSize - 2, 2, levelSize - 2);  // -2 porque no puede ir en los laterales
         color = activeObject[6] ? (activeObject[7] ? generateBlackOrWhite() : generateRandomColor()) : (activeObject[7] ? "White" : "Turquoise");
-        export.Add(buildJSON(objects[3].name + " " + doorCounter.ToString(), new Vector3(doorCoord01.xVal, 1, doorCoord01.yVal), new Quaternion(0 ,0 ,0 ,1), color));
+        export.Add(buildJSON(objects[3].name + " " + doorCounter.ToString(), new Vector3(doorCoord01.x, 1, doorCoord01.y), new Quaternion(0 ,0 ,0 ,1), color));
 
-        if (!activeObject[4]) plateCoord01 = generateRandomPos(1, levelSize - 1, doorCoord01.yVal + 1, levelSize - 1);  // Placa para activar pared
-        export.Add(buildJSON("Pressure Plate " + doorCounter.ToString(), new Vector3(plateCoord01.xVal, 1, plateCoord01.yVal), new Quaternion(0 ,0 ,0 ,1), "", doorCounter));
+        if (!activeObject[4]) plateCoord01 = generateRandomPos(1, levelSize - 1, doorCoord01.y + 1, levelSize - 1);  // Placa para activar pared
+        export.Add(buildJSON("Pressure Plate " + doorCounter.ToString(), new Vector3(plateCoord01.x, 1, plateCoord01.y), new Quaternion(0 ,0 ,0 ,1), "", doorCounter));
         doorCounter++;
 
         for (int i = 1; i < levelSize - 1; i++) { // Construimos paredes horizontales
-          if (i == doorCoord01.xVal) continue;
+          if (i == doorCoord01.x) continue;
           color = activeObject[6] ? (activeObject[7] ? generateBlackOrWhite() : generateRandomColor()) : (activeObject[7] ? "Black" : wallColor); 
-          export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 1, doorCoord01.yVal), new Quaternion(0 ,0 ,0 ,1), color));
-          usedPositions.Add(new Coord { xVal = i, yVal = doorCoord01.yVal });
+          export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 1, doorCoord01.y), new Quaternion(0 ,0 ,0 ,1), color));
+          usedPositions.Add(new Vector2Int(i, doorCoord01.y));
           count++;
         }
 
-        maxFlag.yVal = doorCoord01.yVal;
-        minStart.yVal = doorCoord01.yVal + 1;
+        maxFlag.y = doorCoord01.y;
+        minStart.y = doorCoord01.y + 1;
       }
 
       if (activeObject[4]) {  // Place Presionable (pared interactiva vertical)
         // Si activeObject[3] ya se han preparado las coordenadas
         if (!activeObject[3]) doorCoord02 = generateRandomPos(2, levelSize - 2, 2, levelSize - 2);  // -2 porque no puede ir en los laterales
         color = activeObject[6] ? (activeObject[7] ? generateBlackOrWhite() : generateRandomColor()) : (activeObject[7] ? "White" : "Red");
-        export.Add(buildJSON(objects[3].name + " " + doorCounter.ToString(), new Vector3(doorCoord02.xVal, 1, doorCoord02.yVal), Quaternion.Euler(0f, 90f, 0f), color));
+        export.Add(buildJSON(objects[3].name + " " + doorCounter.ToString(), new Vector3(doorCoord02.x, 1, doorCoord02.y), Quaternion.Euler(0f, 90f, 0f), color));
 
-        if (!activeObject[3]) plateCoord02 = generateRandomPos(doorCoord02.xVal + 1, levelSize - 1, 1, levelSize - 1);  // Placa para activar pared 
-        export.Add(buildJSON("Pressure Plate " + doorCounter.ToString(), new Vector3(plateCoord02.xVal, 1, plateCoord02.yVal), new Quaternion(0 ,0 ,0 ,1), "", doorCounter));
+        if (!activeObject[3]) plateCoord02 = generateRandomPos(doorCoord02.x + 1, levelSize - 1, 1, levelSize - 1);  // Placa para activar pared 
+        export.Add(buildJSON("Pressure Plate " + doorCounter.ToString(), new Vector3(plateCoord02.x, 1, plateCoord02.y), new Quaternion(0 ,0 ,0 ,1), "", doorCounter));
         doorCounter++;
 
         for (int i = 1; i < levelSize - 1; i++) { // Construimos paredes horizontales
-          if (i == doorCoord02.yVal) continue;
-          if (usedPositions.Contains(new Coord() { xVal = doorCoord02.xVal, yVal = i })) continue;
+          if (i == doorCoord02.y) continue;
+          if (usedPositions.Contains(new Vector2Int(doorCoord02.x, i))) continue;
           color = activeObject[6] ? (activeObject[7] ? generateBlackOrWhite() : generateRandomColor()) : (activeObject[7] ? "Black" : wallColor); 
-          export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(doorCoord02.xVal, 1, i), new Quaternion(0 ,0 ,0 ,1), color));
-          usedPositions.Add(new Coord { xVal = doorCoord02.xVal, yVal = i });
+          export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(doorCoord02.x, 1, i), new Quaternion(0 ,0 ,0 ,1), color));
+          usedPositions.Add(new Vector2Int(doorCoord02.x, i));
           count++;
         }
 
-        maxFlag.xVal = doorCoord02.xVal;
-        minStart.xVal = doorCoord02.xVal + 1;
+        maxFlag.x = doorCoord02.x;
+        minStart.x = doorCoord02.x + 1;
       }
     }
 
     if (activeObject[1]) {  // Punto de Partida / Coche
       // Posición aleatoria sin ocupar
-      Coord pos = startCoord = generateRandomPos(minStart.xVal, maxStart.xVal, minStart.yVal, maxStart.yVal);
+      Vector2Int pos = startCoord = generateRandomPos(minStart.x, maxStart.x, minStart.y, maxStart.y);
       // Orientación aleatoria para el coche
       List<float> degrees = new List<float> { 0, 90, 180, 270 };
       System.Random rnd = new System.Random();
       int randomPos = rnd.Next(0, degrees.Count);
       // Lo añadimos al JSON
-      spawnpoints.Add(buildJSON(objects[1].name + " 0", new Vector3(pos.xVal, 1, pos.yVal), Quaternion.Euler(0f, degrees[randomPos], 0f)));
+      spawnpoints.Add(buildJSON(objects[1].name + " 0", new Vector3(pos.x, 1, pos.y), Quaternion.Euler(0f, degrees[randomPos], 0f)));
     }
 
     if (activeObject[0]) {  // Objetivo / Bandera
-      Coord pos = new Coord();
+      Vector2Int pos = new Vector2Int();
       if (activeObject[2]) {  // Si hay laberinto, colocamos el objetivo tan lejos como sea posible
-        Vector2Int temp = storedMaze.FindFarthestReachablePoint(new Vector2Int(startCoord.xVal, startCoord.yVal));
-        pos = flagCoord = new Coord{ xVal = temp.x, yVal = temp.y };
+        Vector2Int temp = storedMaze.FindFarthestReachablePoint(startCoord);
+        pos = flagCoord = new Vector2Int(temp.x, temp.y);
         usedPositions.Add(pos);
       } else {
-        pos = flagCoord = generateRandomPos(minFlag.xVal, maxFlag.xVal, minFlag.yVal, maxFlag.yVal);
+        pos = flagCoord = generateRandomPos(minFlag.x, maxFlag.x, minFlag.y, maxFlag.y);
       }
-      flags.Add(buildJSON(objects[0].name + " 0", new Vector3(pos.xVal, 1, pos.yVal), new Quaternion(0 ,0 ,0 ,1)));
+      flags.Add(buildJSON(objects[0].name + " 0", new Vector3(pos.x, 1, pos.y), new Quaternion(0 ,0 ,0 ,1)));
     }
 
     if (activeObject[2]) {  // REGLAS PARA PAREDES INTERACTIVAS CUANDO HAY LABERINTO (despuies de coche y objetivo)
       if (activeObject[3]) {  // Pared Interactiva (horizontal)
-        List<Coord> positions = new List<Coord>();
+        List<Vector2Int> positions = new List<Vector2Int>();
         int counter = 0;
         while (positions.Count == 0 && counter < 10) {
           positions = getHorizWallMazeCoords(startCoord, flagCoord, true);
@@ -233,12 +225,12 @@ public class JsonGenerator : MonoBehaviour {
         plateCoord01 = positions[1];
 
         color = activeObject[6] ? (activeObject[7] ? generateBlackOrWhite() : generateRandomColor()) : (activeObject[7] ? "White" : "Turquoise");
-        export.Add(buildJSON(objects[3].name + " " + doorCounter.ToString(), new Vector3(positions[0].xVal, 1, positions[0].yVal), new Quaternion(0 ,0 ,0 ,1), color));
-        export.Add(buildJSON("Pressure Plate " + doorCounter.ToString(), new Vector3(positions[1].xVal, 1, positions[1].yVal), new Quaternion(0 ,0 ,0 ,1), "", doorCounter));
+        export.Add(buildJSON(objects[3].name + " " + doorCounter.ToString(), new Vector3(positions[0].x, 1, positions[0].y), new Quaternion(0 ,0 ,0 ,1), color));
+        export.Add(buildJSON("Pressure Plate " + doorCounter.ToString(), new Vector3(positions[1].x, 1, positions[1].y), new Quaternion(0 ,0 ,0 ,1), "", doorCounter));
         doorCounter++;
       }
       if (activeObject[4]) {  // Pared Interactiva (vertical)
-        List<Coord> positions = new List<Coord>();
+        List<Vector2Int> positions = new List<Vector2Int>();
         int counter = 0;
         while (positions.Count == 0 && counter < 10) {
           positions = getHorizWallMazeCoords(startCoord, flagCoord, false);
@@ -249,15 +241,15 @@ public class JsonGenerator : MonoBehaviour {
         plateCoord02 = positions[1];
 
         color = activeObject[6] ? (activeObject[7] ? generateBlackOrWhite() : generateRandomColor()) : (activeObject[7] ? "White" : "Red");
-        export.Add(buildJSON(objects[3].name + " " + doorCounter.ToString(), new Vector3(positions[0].xVal, 1, positions[0].yVal), Quaternion.Euler(0f, 90f, 0f), color));
-        export.Add(buildJSON("Pressure Plate " + doorCounter.ToString(), new Vector3(positions[1].xVal, 1, positions[1].yVal), new Quaternion(0 ,0 ,0 ,1), "", doorCounter));
+        export.Add(buildJSON(objects[3].name + " " + doorCounter.ToString(), new Vector3(positions[0].x, 1, positions[0].y), Quaternion.Euler(0f, 90f, 0f), color));
+        export.Add(buildJSON("Pressure Plate " + doorCounter.ToString(), new Vector3(positions[1].x, 1, positions[1].y), new Quaternion(0 ,0 ,0 ,1), "", doorCounter));
         doorCounter++;
       }
     }
 
     if (activeObject[5]) {  // Camino
-      List<Coord> path = new List<Coord>();
-      List<Coord> stops = new List<Coord> { startCoord };
+      List<Vector2Int> path = new List<Vector2Int>();
+      List<Vector2Int> stops = new List<Vector2Int> { startCoord };
 
       if (activeObject[3] || activeObject[4]) { // Si hay una puerta, el camino debe pasar tanto por la puerta como la placa de presión
         if (activeObject[4]) {                  // Puerta vertical debe ir primero, para el caso de que las 2 esten puestas
@@ -274,7 +266,7 @@ public class JsonGenerator : MonoBehaviour {
       stops.Add(flagCoord);
 
       for (int i = 0; i < stops.Count - 1; i++) { // Combinando los caminos entre todos los elementos
-        List<Coord> tempPath = GeneratePathRecursive(stops[i], stops[i + 1]);
+        List<Vector2Int> tempPath = GeneratePathRecursive(stops[i], stops[i + 1]);
         if (tempPath.Count == 0) return "";       // Ha ocurrido un error
         if (i != 0) tempPath.RemoveAt(0);
         path.AddRange(tempPath);
@@ -282,28 +274,28 @@ public class JsonGenerator : MonoBehaviour {
       
       for (int i = 0; i < path.Count; i++) { // Iteramos el camino para añadir el elemento correcto con la orientación correcta
         color = activeObject[6] ? (activeObject[7] ? generateBlackOrWhite() : generateRandomColor()) : (activeObject[7] ? "White" : "Purple");
-        Coord pos = path[i];
+        Vector2Int pos = path[i];
         if (i == 0) { // Punto de Partida, pieza recta
-          Coord next = path[i + 1];
+          Vector2Int next = path[i + 1];
           Quaternion rotation = Quaternion.Euler(0f, 0f, 0f);
-          if (next.xVal != pos.xVal) rotation = Quaternion.Euler(0f, 270f, 0f);
-          export.Add(buildJSON("Straight Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation, color));
+          if (next.x != pos.x) rotation = Quaternion.Euler(0f, 270f, 0f);
+          export.Add(buildJSON("Straight Path " + count, new Vector3(pos.x, 1, pos.y), rotation, color));
         } else if (i != path.Count - 1) { // Secuencia principal entre punto de partida y final
-          Coord next = path[i + 1];
-          Coord prev = path[i - 1];
-          if (prev.xVal != next.xVal && prev.yVal != next.yVal) {     // Pieza esquina           
+          Vector2Int next = path[i + 1];
+          Vector2Int prev = path[i - 1];
+          if (prev.x != next.x && prev.y != next.y) {     // Pieza esquina           
             Quaternion rotation = getCornerRotation(prev, pos, next); // Obtener orientación de la esquina
-            export.Add(buildJSON("Corner Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation, color));
+            export.Add(buildJSON("Corner Path " + count, new Vector3(pos.x, 1, pos.y), rotation, color));
           } else {  // Pieza recta dentro de la secuencia
             Quaternion rotation = Quaternion.Euler(0f, 0f, 0f);
-            if (next.xVal != pos.xVal) rotation = Quaternion.Euler(0f, 270f, 0f);
-            export.Add(buildJSON("Straight Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation, color));
+            if (next.x != pos.x) rotation = Quaternion.Euler(0f, 270f, 0f);
+            export.Add(buildJSON("Straight Path " + count, new Vector3(pos.x, 1, pos.y), rotation, color));
           }
         } else {  // Objetivo, pieza recta
-          Coord prev = path[i - 1];
+          Vector2Int prev = path[i - 1];
           Quaternion rotation = Quaternion.Euler(0f, 0f, 0f);
-          if (prev.xVal != pos.xVal) rotation = Quaternion.Euler(0f, 270f, 0f);
-          export.Add(buildJSON("Straight Path " + count, new Vector3(pos.xVal, 1, pos.yVal), rotation, color));
+          if (prev.x != pos.x) rotation = Quaternion.Euler(0f, 270f, 0f);
+          export.Add(buildJSON("Straight Path " + count, new Vector3(pos.x, 1, pos.y), rotation, color));
         }
         count++;  // Incrementar Contador
       }
@@ -399,14 +391,14 @@ public class JsonGenerator : MonoBehaviour {
   /// <param name="start">Punto de partido</param>
   /// <param name="end">Posicion Objetiva</param>
   /// <returns>El camino encontrado entre los dos puntos, vacio si no se ha encontrado ninguno</returns>
-  private List<Coord> GeneratePathRecursive(Coord start, Coord end) {
-    List<Coord> result = new List<Coord>();
-    HashSet<Coord> visited = new HashSet<Coord>();
+  private List<Vector2Int> GeneratePathRecursive(Vector2Int start, Vector2Int end) {
+    List<Vector2Int> result = new List<Vector2Int>();
+    HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
 
     bool found = TryStep(start, start, end, visited, result);
     if (!found) {
       Debug.LogWarning("No valid path found.");
-      return new List<Coord>();
+      return new List<Vector2Int>();
     }
     return result;
   }
@@ -420,13 +412,13 @@ public class JsonGenerator : MonoBehaviour {
   /// <param name="visited">Posiciones ya visitadas</param>
   /// <param name="path">El camino desarrollado hasta el momento</param>
   /// <returns>True si se ha conseguido encontrar el camino</returns>
-  private bool TryStep(Coord start, Coord current, Coord end, HashSet<Coord> visited, List<Coord> path) {
+  private bool TryStep(Vector2Int start, Vector2Int current, Vector2Int end, HashSet<Vector2Int> visited, List<Vector2Int> path) {
     // Falso si la posicion ya esta en uso y no es el punto de partida o el objetivo
     if (usedPositions.Contains(current) && !current.Equals(start) && !current.Equals(end) ) {
       return false;
     }
     // Falso si estamos en el borde de la rejilla
-    if (current.xVal == 0 || current.xVal == levelSize - 1 || current.yVal == 0 || current.yVal == levelSize - 1) {
+    if (current.x == 0 || current.x == levelSize - 1 || current.y == 0 || current.y == levelSize - 1) {
       return false;
     }
     // Falso si ya se ha explorado en esta busqueda
@@ -445,14 +437,14 @@ public class JsonGenerator : MonoBehaviour {
       Vector2Int.right
     }.OrderBy(_ => UnityEngine.Random.value).ToArray();
 
-    List<Coord> posibilities = new List<Coord>();
+    List<Vector2Int> posibilities = new List<Vector2Int>();
 
     // Probando cada dirección recursivamente
     foreach (var dir in directions) {
-      Coord next = new Coord { xVal = current.xVal + dir.x, yVal = current.yVal + dir.y };
+      Vector2Int next = new Vector2Int(current.x + dir.x, current.y + dir.y);
 
-      int currentDist = Mathf.Abs(end.xVal - current.xVal) + Mathf.Abs(end.yVal - current.yVal);
-      int nextDist = Mathf.Abs(end.xVal - next.xVal) + Mathf.Abs(end.yVal - next.yVal);
+      int currentDist = Mathf.Abs(end.x - current.x) + Mathf.Abs(end.y - current.y);
+      int nextDist = Mathf.Abs(end.x - next.x) + Mathf.Abs(end.y - next.y);
 
       if (nextDist <= currentDist) {
         if (TryStep(start, next, end, visited, path)) {
@@ -465,7 +457,7 @@ public class JsonGenerator : MonoBehaviour {
     }
 
     // Backup si el camino "optimo" no existe
-    foreach (Coord test in posibilities) {
+    foreach (Vector2Int test in posibilities) {
       if (TryStep(start, test, end, visited, path)) {
         if (!(activeObject[2] && (activeObject[3] || activeObject[4]))) usedPositions.Add(current);
         return true;
@@ -485,20 +477,20 @@ public class JsonGenerator : MonoBehaviour {
   /// <param name="pos">Posición con el que debemos tratar</param>
   /// <param name="next">Posición proxima a la actual</param>
   /// <returns>La rotacion correcta</returns>
-  private Quaternion getCornerRotation(Coord prev, Coord pos, Coord next) {
+  private Quaternion getCornerRotation(Vector2Int prev, Vector2Int pos, Vector2Int next) {
     Quaternion rotation = new Quaternion();
 
-    if (prev.xVal + 1 == next.xVal && prev.yVal + 1 == next.yVal) {         // (+, +)
-      if (pos.yVal + 1 == next.yVal) rotation = Quaternion.Euler(0f, 180f, 0f);
+    if (prev.x + 1 == next.x && prev.y + 1 == next.y) {         // (+, +)
+      if (pos.y + 1 == next.y) rotation = Quaternion.Euler(0f, 180f, 0f);
       else rotation = Quaternion.Euler(0f, 0f, 0f);;                         
-    } else if (prev.xVal + 1 == next.xVal && prev.yVal - 1 == next.yVal) {  // (+ -)
-      if (pos.yVal - 1 == next.yVal) rotation = Quaternion.Euler(0f, 90f, 0f);
+    } else if (prev.x + 1 == next.x && prev.y - 1 == next.y) {  // (+ -)
+      if (pos.y - 1 == next.y) rotation = Quaternion.Euler(0f, 90f, 0f);
       else rotation = Quaternion.Euler(0f, 270f, 0f);     
-    } else if (prev.xVal - 1 == next.xVal && prev.yVal + 1 == next.yVal) {  // (-, +)
-      if (pos.yVal + 1 == next.yVal) rotation = Quaternion.Euler(0f, 270f, 0f);
+    } else if (prev.x - 1 == next.x && prev.y + 1 == next.y) {  // (-, +)
+      if (pos.y + 1 == next.y) rotation = Quaternion.Euler(0f, 270f, 0f);
       else rotation = Quaternion.Euler(0f, 90f, 0f);                                 
-    } else if (prev.xVal - 1 == next.xVal && prev.yVal - 1 == next.yVal) {  // (-, -)
-      if (pos.yVal - 1 == next.yVal) rotation = Quaternion.Euler(0f, 0f, 0f);   
+    } else if (prev.x - 1 == next.x && prev.y - 1 == next.y) {  // (-, -)
+      if (pos.y - 1 == next.y) rotation = Quaternion.Euler(0f, 0f, 0f);   
       else rotation = Quaternion.Euler(0f, 180f, 0f);;
     }
 
@@ -512,8 +504,8 @@ public class JsonGenerator : MonoBehaviour {
   /// <param name="flagPos">Posicion Final</param>
   /// <param name="horizontal">True si es para la pared horizontal activeObject[3]</param>
   /// <returns>Coordinadas resultantes, [0] para pared interactiva y [1] para su placa</returns>
-  private List<Coord> getHorizWallMazeCoords(Coord startPos, Coord flagPos, bool horizontal, int otherX = 0, int otherY = 0) {
-    List<Coord> result = new List<Coord>();
+  private List<Vector2Int> getHorizWallMazeCoords(Vector2Int startPos, Vector2Int flagPos, bool horizontal, int otherX = 0, int otherY = 0) {
+    List<Vector2Int> result = new List<Vector2Int>();
     System.Random rnd = new System.Random();
     bool found = false;
     int count = 0, counterMax = 50;
@@ -522,13 +514,13 @@ public class JsonGenerator : MonoBehaviour {
       int xCoord, yCoord;
       xCoord = rnd.Next(2, levelSize - 2);  // En el caso de 4, n >= 1 & n < 4
       yCoord = rnd.Next(2, levelSize - 2);
-      Coord wallCandidate = new Coord { xVal = xCoord, yVal = yCoord };
+      Vector2Int wallCandidate = new Vector2Int(xCoord, yCoord );
       
-      Coord filled01 = horizontal ? new Coord { xVal = xCoord + 1, yVal = yCoord } : new Coord { xVal = xCoord, yVal = yCoord + 1 } ;
-      Coord filled02 = horizontal ? new Coord { xVal = xCoord - 1, yVal = yCoord } : new Coord { xVal = xCoord, yVal = yCoord - 1 } ;
-      Coord empty01 = horizontal ? new Coord { xVal = xCoord, yVal = yCoord + 1 } : new Coord { xVal = xCoord + 1, yVal = yCoord } ;
-      Coord empty02 = horizontal ? new Coord { xVal = xCoord, yVal = yCoord - 1 } : new Coord { xVal = xCoord - 1, yVal = yCoord } ;
-      if (!horizontal && (filled01.Equals(new Coord { xVal = otherX, yVal = otherY }) || filled02.Equals(new Coord { xVal = otherX, yVal = otherY }))) {
+      Vector2Int filled01 = horizontal ? new Vector2Int(xCoord + 1, yCoord) : new Vector2Int(xCoord, yCoord + 1);
+      Vector2Int filled02 = horizontal ? new Vector2Int(xCoord - 1, yCoord) : new Vector2Int(xCoord, yCoord - 1);
+      Vector2Int empty01 = horizontal ? new Vector2Int(xCoord, yCoord + 1) : new Vector2Int(xCoord + 1, yCoord);
+      Vector2Int empty02 = horizontal ? new Vector2Int(xCoord, yCoord - 1) : new Vector2Int(xCoord - 1, yCoord);
+      if (!horizontal && (filled01.Equals(new Vector2Int(otherX, otherY )) || filled02.Equals(new Vector2Int(otherX, otherY )))) {
         count++;
         continue;   // La otra pared no debe ser adyacente
       }
@@ -544,7 +536,7 @@ public class JsonGenerator : MonoBehaviour {
         int xPlateCoord, yPlateCoord;
         xPlateCoord = rnd.Next(2, levelSize - 2);
         yPlateCoord = rnd.Next(2, levelSize - 2);
-        Coord plateCandidate = new Coord { xVal = xPlateCoord, yVal = yPlateCoord };
+        Vector2Int plateCandidate = new Vector2Int(xPlateCoord, yPlateCoord);
         if (pathExists(startPos, plateCandidate, wallCandidate)
             && !usedPositions.Contains(plateCandidate)) {          
           result.Add(wallCandidate);
@@ -568,9 +560,9 @@ public class JsonGenerator : MonoBehaviour {
   /// <param name="goal">Punto objetivo</param>
   /// <param name="blockedCell">Coordenada temporal que se concidera como bloqueado</param>
   /// <returns>True si el camino existe</returns>
-  private bool pathExists(Coord start, Coord goal, Coord blockedCell) {
-    Queue<Coord> frontier = new Queue<Coord>();
-    HashSet<Coord> visited = new HashSet<Coord>();
+  private bool pathExists(Vector2Int start, Vector2Int goal, Vector2Int blockedCell) {
+    Queue<Vector2Int> frontier = new Queue<Vector2Int>();
+    HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
     frontier.Enqueue(start);
     visited.Add(start);
 
@@ -581,14 +573,11 @@ public class JsonGenerator : MonoBehaviour {
     int count = 0, maxCounter = 50;
 
     while (frontier.Count > 0 && count < maxCounter) {
-      Coord current = frontier.Dequeue();
+      Vector2Int current = frontier.Dequeue();
       if (current.Equals(goal)) return true;
 
       foreach (var dir in dirs) {
-        Coord neighbor = new Coord {
-          xVal = current.xVal + dir.x,
-          yVal = current.yVal + dir.y
-        };
+        Vector2Int neighbor = new Vector2Int(current.x + dir.x, current.y + dir.y);
 
         if (neighbor.Equals(blockedCell)) continue;
         if (usedPositions.Contains(neighbor)) continue;
@@ -615,7 +604,7 @@ public class JsonGenerator : MonoBehaviour {
   /// <param name="minY">Minimo valor que debe tener Y, puede ser igual</param>
   /// <param name="maxY">Maximo valor que debe tener Y</param>
   /// <returns>Coordenada generada</returns>
-  private Coord generateRandomPos(int minX = 1, int maxX = -1, int minY = 1, int maxY = -1) {
+  private Vector2Int generateRandomPos(int minX = 1, int maxX = -1, int minY = 1, int maxY = -1) {
     if (maxX == -1) maxX = levelSize - 1;
     if (maxY == -1) maxY = levelSize - 1;
     System.Random rnd = new System.Random();
@@ -625,10 +614,10 @@ public class JsonGenerator : MonoBehaviour {
       int xCoord, yCoord;
       xCoord = (minX == maxX) ? minX : rnd.Next(minX, maxX);  // En el caso de 4, n >= 1 & n < 4
       yCoord = (minY == maxY) ? minY : rnd.Next(minY, maxY);
-      Coord generated = new Coord { xVal = xCoord, yVal = yCoord };
+      Vector2Int generated = new Vector2Int(xCoord, yCoord);
       
       if (!usedPositions.Contains(generated)) {
-        usedPositions.Add(new Coord { xVal = xCoord, yVal = yCoord });
+        usedPositions.Add(new Vector2Int(xCoord, yCoord));
         found = true;
       }
     }
@@ -660,10 +649,10 @@ public class JsonGenerator : MonoBehaviour {
   /// Asigna las posiciones minimas/maximas de nuestros puntos iniciales y finales a sus valores originales
   /// </summary>
   private void setupCoordValues() {
-    minFlag = new Coord { xVal = 1, yVal = 1 };
-    maxFlag = new Coord { xVal = levelSize - 1, yVal = levelSize - 1 };
-    minStart = new Coord { xVal = 1, yVal = 1 };
-    maxStart = new Coord { xVal = levelSize - 1, yVal = levelSize - 1 };
+    minFlag = new Vector2Int(1, 1);
+    maxFlag = new Vector2Int(levelSize - 1, levelSize - 1);
+    minStart = new Vector2Int(1, 1);
+    maxStart = new Vector2Int(levelSize - 1, levelSize - 1);
   }
 
   /// <summary>
