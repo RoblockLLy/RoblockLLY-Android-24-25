@@ -91,11 +91,11 @@ public class GameManager : MonoBehaviour {
     if (panelExport.activeSelf) {
       panelExport.SetActive(false);
     } else {      
-      int counter = 0;
+      int counter = 0, maxCounter = 50;
       bool succesful = false;
       jsonBuilder.setActiveObjects(activeObjects);
 
-      while (counter < 5 && !succesful) {     // Se realizan hasta 5 generacione si hace falta, protección contra generación camino
+      while (counter < maxCounter && !succesful) {     // Se realizan hasta 5 generacione si hace falta, protección contra generación camino
         string result = jsonBuilder.buildExport();
 
         if (!string.IsNullOrEmpty(result)) {  // Generación éxitosa
@@ -116,7 +116,7 @@ public class GameManager : MonoBehaviour {
         // Debug.Log("Counter: " + counter);
       }
 
-      if (!succesful) {  // Hubo errores con las 5 generaciones
+      if (!succesful) {  // Hubo errores con las generaciones
         panelError.SetActive(true);
       } 
     }

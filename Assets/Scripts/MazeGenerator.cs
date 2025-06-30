@@ -46,7 +46,7 @@ public class MazeGenerator {
 
   #endregion
 
-  #region Metodos Principales
+  #region Maze Generator
 
   /// <summary>
   /// Constructor de la clase
@@ -156,6 +156,48 @@ public class MazeGenerator {
       array[i] = array[j];
       array[j] = tmp;
     }
+  }
+
+  /// <summary>
+  /// Finds the farthest reachable cell in the maze from the given start position.
+  /// Only walks through open paths (maze[x, y] == true).
+  /// </summary>
+  /// <param name="start">Starting position</param>
+  /// <returns>The farthest reachable coordinate</returns>
+  public Vector2Int FindFarthestReachablePoint(Vector2Int start) {
+    Queue<Vector2Int> frontier = new Queue<Vector2Int>();
+    HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
+    Dictionary<Vector2Int, int> distanceMap = new Dictionary<Vector2Int, int>();
+
+    frontier.Enqueue(start);
+    visited.Add(start);
+    distanceMap[start] = 0;
+
+    Vector2Int farthest = start;
+    int maxDistance = 0;
+
+    while (frontier.Count > 0) {
+      Vector2Int current = frontier.Dequeue();
+      int currentDistance = distanceMap[current];
+
+      foreach (var dir in directions) {
+        Vector2Int neighbor = current + dir;
+        if (!IsInInnerBounds(neighbor)) continue;
+        if (maze[neighbor.x, neighbor.y] == false) continue; // wall
+        if (visited.Contains(neighbor)) continue;
+
+        visited.Add(neighbor);
+        frontier.Enqueue(neighbor);
+        distanceMap[neighbor] = currentDistance + 1;
+
+        if (distanceMap[neighbor] > maxDistance) {
+          maxDistance = distanceMap[neighbor];
+          farthest = neighbor;
+        }
+      }
+    }
+
+    return farthest;
   }
 
   #endregion
