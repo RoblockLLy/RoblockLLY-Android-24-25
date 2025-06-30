@@ -126,6 +126,22 @@ public class JsonGenerator : MonoBehaviour {
     Coord doorCoord01 = new Coord(), doorCoord02 = new Coord(), plateCoord01 = new Coord(), plateCoord02 = new Coord(); 
     Coord flagCoord = new Coord(), startCoord = new Coord();
 
+    if (activeObject[2]) {  // Laberinto
+      MazeGenerator generator = new MazeGenerator(levelSize);
+      bool[,] maze = generator.GenerateMaze(new Vector2Int(1, 1));  // Empezamos la generación en (1, 1)
+
+      for (int x = 1; x < levelSize - 1; x++) {
+        for (int y = 1; y < levelSize - 1; y++) {
+          if (!maze[x, y]) {
+            usedPositions.Add(new Coord { xVal = x, yVal = y } );
+            color = activeObject[6] ? (activeObject[7] ? generateBlackOrWhite() : generateRandomColor()) : (activeObject[7] ? "Black" : wallColor);
+            export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(x, 1, y), new Quaternion(0 ,0 ,0 ,1), color));
+            count++;
+          } 
+        }
+      }
+    }
+
     if (activeObject[3] && activeObject[4]) { // Si ambas paredes estan activas, hay que preparar las coordenadas conjuntamente
       doorCoord01 = generateRandomPos(2, levelSize - 3, 2, levelSize - 3);  // -3 Teniendo en cuenta que se puede generar una nueva pared tras ella
       doorCoord02 = generateRandomPos(doorCoord01.xVal + 1, levelSize - 2, doorCoord01.yVal + 1, levelSize - 2);
@@ -136,7 +152,7 @@ public class JsonGenerator : MonoBehaviour {
     if (activeObject[3]) {  // Pared Interactiva (horizontal)
       // Si activeObject[4] ya se han preparado las coordenadas
       if (!activeObject[4]) doorCoord01 = generateRandomPos(2, levelSize - 2, 2, levelSize - 2);  // -2 porque no puede ir en los laterales
-      color = activeObject[6] ? generateRandomColor() : activeObject[7] ? "White" : "Turquoise";
+      color = activeObject[6] ? (activeObject[7] ? generateBlackOrWhite() : generateRandomColor()) : (activeObject[7] ? "White" : "Turquoise");
       export.Add(buildJSON(objects[3].name + " " + count.ToString(), new Vector3(doorCoord01.xVal, 1, doorCoord01.yVal), new Quaternion(0 ,0 ,0 ,1), color));
 
       if (!activeObject[4]) plateCoord01 = generateRandomPos(1, levelSize - 1, doorCoord01.yVal + 1, levelSize - 1);  // Placa para activar pared
@@ -144,7 +160,7 @@ public class JsonGenerator : MonoBehaviour {
 
       for (int i = 1; i < levelSize - 1; i++) { // Construimos paredes horizontales
         if (i == doorCoord01.xVal) continue;
-        color = activeObject[6] ? generateRandomColor() : activeObject[7] ? "Black" : wallColor; 
+        color = activeObject[6] ? (activeObject[7] ? generateBlackOrWhite() : generateRandomColor()) : (activeObject[7] ? "Black" : wallColor); 
         export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 1, doorCoord01.yVal), new Quaternion(0 ,0 ,0 ,1), color));
         usedPositions.Add(new Coord { xVal = i, yVal = doorCoord01.yVal });
         count++;
@@ -157,7 +173,7 @@ public class JsonGenerator : MonoBehaviour {
     if (activeObject[4]) {  // Place Presionable (pared interactiva vertical)
       // Si activeObject[3] ya se han preparado las coordenadas
       if (!activeObject[3]) doorCoord02 = generateRandomPos(2, levelSize - 2, 2, levelSize - 2);  // -2 porque no puede ir en los laterales
-      color = activeObject[6] ? generateRandomColor() : activeObject[7] ? "White" : "Red";
+      color = activeObject[6] ? (activeObject[7] ? generateBlackOrWhite() : generateRandomColor()) : (activeObject[7] ? "White" : "Red");
       export.Add(buildJSON(objects[3].name + " " + count.ToString(), new Vector3(doorCoord02.xVal, 1, doorCoord02.yVal), Quaternion.Euler(0f, 90f, 0f), color));
 
       if (!activeObject[3]) plateCoord02 = generateRandomPos(doorCoord02.xVal + 1, levelSize - 1, 1, levelSize - 1);  // Placa para activar pared 
@@ -166,7 +182,7 @@ public class JsonGenerator : MonoBehaviour {
       for (int i = 1; i < levelSize - 1; i++) { // Construimos paredes horizontales
         if (i == doorCoord02.yVal) continue;
         if (usedPositions.Contains(new Coord() { xVal = doorCoord02.xVal, yVal = i })) continue;
-        color = activeObject[6] ? generateRandomColor() : activeObject[7] ? "Black" : wallColor; 
+        color = activeObject[6] ? (activeObject[7] ? generateBlackOrWhite() : generateRandomColor()) : (activeObject[7] ? "Black" : wallColor); 
         export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(doorCoord02.xVal, 1, i), new Quaternion(0 ,0 ,0 ,1), color));
         usedPositions.Add(new Coord { xVal = doorCoord02.xVal, yVal = i });
         count++;
@@ -174,22 +190,6 @@ public class JsonGenerator : MonoBehaviour {
 
       maxFlag.xVal = doorCoord02.xVal;
       minStart.xVal = doorCoord02.xVal + 1;
-    }
-
-    if (activeObject[2]) {  // Laberinto
-      MazeGenerator generator = new MazeGenerator(levelSize);
-      bool[,] maze = generator.GenerateMaze(new Vector2Int(1, 1));  // Empezamos la generación en (1, 1)
-
-      for (int x = 1; x < levelSize - 1; x++) {
-        for (int y = 1; y < levelSize - 1; y++) {
-          if (!maze[x, y]) {
-            usedPositions.Add(new Coord { xVal = x, yVal = y } );
-            color = activeObject[6] ? generateRandomColor() : activeObject[7] ? "Black" : wallColor;
-            export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(x, 1, y), new Quaternion(0 ,0 ,0 ,1), color));
-            count++;
-          } 
-        }
-      }
     }
 
     if (activeObject[0]) {  // Objetivo / Bandera
@@ -234,7 +234,7 @@ public class JsonGenerator : MonoBehaviour {
       }
       
       for (int i = 0; i < path.Count; i++) { // Iteramos el camino para añadir el elemento correcto con la orientación correcta
-        color = activeObject[6] ? generateRandomColor() : activeObject[7] ? "White" : "Purple";
+        color = activeObject[6] ? (activeObject[7] ? generateBlackOrWhite() : generateRandomColor()) : (activeObject[7] ? "White" : "Purple");
         Coord pos = path[i];
         if (i == 0) { // Punto de Partida, pieza recta
           Coord next = path[i + 1];
@@ -265,12 +265,12 @@ public class JsonGenerator : MonoBehaviour {
     for (int i = 0; i < levelSize; i++) { // Paredes externas y Suelo
       for (int j = 0; j < levelSize; j++) {
         if (i != 0 && i != levelSize - 1 && j != 0 && j != levelSize - 1) { // No hace falta meter el suelo en posiciones usadas
-          color = activeObject[6] ? generateRandomColor() : activeObject[7] ? "Black" : floorColor;
+          color = activeObject[6] ? (activeObject[7] ? generateBlackOrWhite() : generateRandomColor()) : (activeObject[7] ? "Black" : floorColor);
           export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 0, j), new Quaternion(0 ,0 ,0 ,1), color));
           count++;
           continue;
         }
-        color = activeObject[6] ? generateRandomColor() : activeObject[7] ? "Black" : wallColor;
+        color = activeObject[6] ? (activeObject[7] ? generateBlackOrWhite() : generateRandomColor()) : (activeObject[7] ? "Black" : wallColor);
         export.Add(buildJSON("Full Block" + " " + count.ToString(), new Vector3(i, 1, j), new Quaternion(0 ,0 ,0 ,1), color));
         count++;
       }
@@ -499,6 +499,16 @@ public class JsonGenerator : MonoBehaviour {
     System.Random rnd = new System.Random();
     int val = rnd.Next(0, colorList.Count);
     return colorList[val];
+  }
+
+  /// <summary>
+  /// Elige entre el color blanco o negro aleatoriamente
+  /// </summary>
+  /// <returns>String del color elegido</returns>
+  private string generateBlackOrWhite() {
+    System.Random rnd = new System.Random();
+    int val = rnd.Next(0, 2);   // Devolvera 0 o 1
+    return (val == 0) ? "Black" : "White";
   }
 
   /// <summary>
