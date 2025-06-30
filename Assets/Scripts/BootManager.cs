@@ -4,32 +4,34 @@
 * Autor: Thomas Edward Bradley
 * Email: alu0101408248@ull.edu.es
 * Fecha: 30/06/2025
-* Descripcion: 
+* Descripcion: Clase encargado de las animaciones en la Boot Sequence
 */
 
 using UnityEngine;
 using System.Collections;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 public class BootManager : MonoBehaviour {
-  public Animation roblockllyLogo;
-  public Animation ullLogo;
+  public List<Animation> animations;
 
+  /// <summary>
+  /// Empezamos las animaciones al abrir la escena de boot
+  /// </summary>
   void Start() {
     StartCoroutine(PlayAnimationsInSequence());
   }
 
   /// <summary>
-  /// 
+  /// Corutina encargado de ejecutar todas las animaciones
   /// </summary>
   private IEnumerator PlayAnimationsInSequence() {
-    roblockllyLogo.Play();
-    yield return new WaitWhile(() => roblockllyLogo.isPlaying);
+    foreach (Animation anim in animations) {
+      anim.Play();
+      yield return new WaitWhile(() => anim.isPlaying);
+    }
 
-    ullLogo.Play();
-    yield return new WaitWhile(() => ullLogo.isPlaying);
-
-    yield return new WaitForSeconds(0.5f);    // Buffer
+    yield return new WaitForSeconds(0.2f);    // Buffer
     SceneManager.LoadScene(1);
   }
 }

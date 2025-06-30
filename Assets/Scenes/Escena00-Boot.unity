@@ -284,8 +284,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d9495624101f7c4d8011b59dc6e1bfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  roblockllyLogo: {fileID: 1709619259}
-  ullLogo: {fileID: 2042889288}
+  animations:
+  - {fileID: 1709619259}
+  - {fileID: 2042889288}
 --- !u!1 &1295820284
 GameObject:
   m_ObjectHideFlags: 0
