@@ -12,6 +12,7 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class JsonGenerator : MonoBehaviour {
@@ -506,24 +507,27 @@ public class JsonGenerator : MonoBehaviour {
   /// <returns>Coordinadas resultantes, [0] para pared interactiva y [1] para su placa</returns>
   private List<Vector2Int> getHorizWallMazeCoords(Vector2Int startPos, Vector2Int flagPos, bool horizontal, int otherX = 0, int otherY = 0) {
     List<Vector2Int> result = new List<Vector2Int>();
+    List<Vector2Int> fullValidSpaces = getValidSpaces();
+    List<Vector2Int> wallLimitedList = fullValidSpaces;
     System.Random rnd = new System.Random();
     bool found = false;
-    int count = 0, counterMax = 50;
 
-    while (!found) {      
-      int xCoord, yCoord;
-      xCoord = rnd.Next(2, levelSize - 2);  // En el caso de 4, n >= 1 & n < 4
-      yCoord = rnd.Next(2, levelSize - 2);
-      Vector2Int wallCandidate = new Vector2Int(xCoord, yCoord );
+    while (!found && wallLimitedList.Count > 0) {      
+      int wallPos = rnd.Next(0, wallLimitedList.Count);
+      Vector2Int wallCandidate = wallLimitedList[wallPos];       
+      int xCoord = wallCandidate.x, yCoord = wallCandidate.y;  
+      wallLimitedList.RemoveAt(wallPos);   
+
+      if (xCoord == 1 || xCoord == levelSize - 2 || yCoord == 1 || yCoord == levelSize - 2) continue; // No tener pared pegado al borde
       
       Vector2Int filled01 = horizontal ? new Vector2Int(xCoord + 1, yCoord) : new Vector2Int(xCoord, yCoord + 1);
       Vector2Int filled02 = horizontal ? new Vector2Int(xCoord - 1, yCoord) : new Vector2Int(xCoord, yCoord - 1);
       Vector2Int empty01 = horizontal ? new Vector2Int(xCoord, yCoord + 1) : new Vector2Int(xCoord + 1, yCoord);
       Vector2Int empty02 = horizontal ? new Vector2Int(xCoord, yCoord - 1) : new Vector2Int(xCoord - 1, yCoord);
-      if (!horizontal && (filled01.Equals(new Vector2Int(otherX, otherY )) || filled02.Equals(new Vector2Int(otherX, otherY )))) {
-        count++;
-        continue;   // La otra pared no debe ser adyacente
-      }
+
+      // La otra pared no debe ser adyacente
+      if (!horizontal && (filled01.Equals(new Vector2Int(otherX, otherY)) || filled02.Equals(new Vector2Int(otherX, otherY)))) continue;
+
       if (!usedPositions.Contains(wallCandidate) 
           && usedPositions.Contains(filled01)
           && !filled01.Equals(startPos)
@@ -533,21 +537,43 @@ public class JsonGenerator : MonoBehaviour {
           && !filled02.Equals(flagPos)
           && !usedPositions.Contains(empty01)
           && !usedPositions.Contains(empty02)) {
-        int xPlateCoord, yPlateCoord;
-        xPlateCoord = rnd.Next(2, levelSize - 2);
-        yPlateCoord = rnd.Next(2, levelSize - 2);
-        Vector2Int plateCandidate = new Vector2Int(xPlateCoord, yPlateCoord);
-        if (pathExists(startPos, plateCandidate, wallCandidate)
-            && !usedPositions.Contains(plateCandidate)) {          
-          result.Add(wallCandidate);
-          usedPositions.Add(wallCandidate);
-          result.Add(plateCandidate);
-          usedPositions.Add(plateCandidate);
-          found = true;
+        
+        List<Vector2Int> plateLimitedList = fullValidSpaces;
+        while (!found && plateLimitedList.Count > 0) {
+          int platePos = rnd.Next(0, plateLimitedList.Count);
+          Vector2Int plateCandidate = plateLimitedList[platePos];        
+          plateLimitedList.RemoveAt(platePos);
+
+          if (plateCandidate.Equals(wallCandidate)) continue;
+          if (usedPositions.Contains(plateCandidate)) continue;
+
+          if (pathExists(startPos, plateCandidate, wallCandidate)) {          
+            result.Add(wallCandidate);
+            usedPositions.Add(wallCandidate);
+            result.Add(plateCandidate);
+            usedPositions.Add(plateCandidate);
+            found = true;
+          } 
         }
       }
-      count++;
-      if (count > counterMax) return result;
+    }
+
+    return result;
+  }
+
+  /// <summary>
+  /// Calcula y retorna una lista con todos los espacios no ocupados
+  /// </summary>
+  /// <returns>Lista de espacios no ocupados</returns>
+  private List<Vector2Int> getValidSpaces() {
+    List<Vector2Int> result = new List<Vector2Int>();
+
+    for (int i = 1; i < levelSize - 1; i++) {
+      for (int j = 1; j < levelSize - 1; j++) {
+        Vector2Int candidate = new Vector2Int(i, j);
+        if (usedPositions.Contains(candidate)) continue;
+        else result.Add(candidate);
+      }
     }
 
     return result;
@@ -570,23 +596,21 @@ public class JsonGenerator : MonoBehaviour {
       Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right
     };
 
-    int count = 0, maxCounter = 50;
-
-    while (frontier.Count > 0 && count < maxCounter) {
+    while (frontier.Count > 0) {
       Vector2Int current = frontier.Dequeue();
       if (current.Equals(goal)) return true;
 
       foreach (var dir in dirs) {
         Vector2Int neighbor = new Vector2Int(current.x + dir.x, current.y + dir.y);
 
+        if (neighbor.x == 0 || neighbor.x == levelSize - 1 || neighbor.y == 0 || neighbor.y == levelSize - 1) continue;
         if (neighbor.Equals(blockedCell)) continue;
         if (usedPositions.Contains(neighbor)) continue;
         if (visited.Contains(neighbor)) continue;
-
+        
         visited.Add(neighbor);
         frontier.Enqueue(neighbor);
       }
-      count++;
     }
 
     return false;

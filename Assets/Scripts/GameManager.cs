@@ -91,7 +91,7 @@ public class GameManager : MonoBehaviour {
     if (panelExport.activeSelf) {
       panelExport.SetActive(false);
     } else {      
-      int counter = 0, maxCounter = 50;
+      int counter = 0, maxCounter = 1000;
       bool succesful = false;
       jsonBuilder.setActiveObjects(activeObjects);
 
