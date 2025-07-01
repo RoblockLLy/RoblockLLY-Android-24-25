@@ -110,7 +110,7 @@ public class GameManager : MonoBehaviour {
           // CAMBIAR TAMAÑO DEL ESPACIO DE SCROLL DINAMICAMENTE          
           GameObject inputField = contentObject.transform.Find("InputField (TMP)").gameObject;
           int lineBreaks = finishedLevelText.Count(c => c == '\n');
-          float heightPerLine = 13.9f;  // Aproximadamente
+          float heightPerLine = 13.85f;  // Aproximadamente
           contentObject.GetComponent<RectTransform>().sizeDelta = new Vector2(0f, heightPerLine * lineBreaks);
           inputField.GetComponent<RectTransform>().sizeDelta = new Vector2(180f, heightPerLine * lineBreaks);
           

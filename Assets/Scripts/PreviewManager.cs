@@ -104,7 +104,7 @@ public class PreviewManager : MonoBehaviour {
   /// Alinea la camara con el nivel en el escenario
   /// </summary>
   public void allignCamera() {
-    renderCamera.transform.position = new Vector3(renderCamera.transform.position.x, levelSize, renderCamera.transform.position.z);
+    renderCamera.transform.position = new Vector3(renderCamera.transform.position.x, levelSize * 1.5f, renderCamera.transform.position.z);
     Vector3 middlePoint = new Vector3(levelSize / 2, 0f, levelSize / 2);
     renderCamera.transform.LookAt(middlePoint);
   }
