@@ -40,6 +40,10 @@ public class GameManager : MonoBehaviour {
   [SerializeField] [Tooltip("Campo donde mostrar el código completado del nivel")]
   public TMP_InputField exportText;
 
+  [Header("Preview Elements")]
+  [SerializeField] [Tooltip("Manager que se encaraga de visualizar el nivel por pantalla")]
+  public PreviewManager previewManager;
+
   /// <summary>
   /// Lista de objetos activados por Vuforia, true si estan puestos
   /// </summary>
@@ -109,6 +113,9 @@ public class GameManager : MonoBehaviour {
           contentObject.GetComponent<RectTransform>().sizeDelta = new Vector2(0f, heightPerLine * lineBreaks);
           inputField.GetComponent<RectTransform>().sizeDelta = new Vector2(180f, heightPerLine * lineBreaks);
           
+          previewManager.setLevel(finishedLevelText);
+          previewManager.preview();
+
           panelExport.SetActive(true);
         } else {                              // Se ha producido un error con la generación
           counter++;

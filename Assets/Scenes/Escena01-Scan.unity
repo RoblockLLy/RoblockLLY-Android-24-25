@@ -6813,6 +6813,56 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1322471553}
   m_CullTransparentMesh: 1
+--- !u!1 &1327368653
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1327368654}
+  - component: {fileID: 1327368655}
+  m_Layer: 0
+  m_Name: PreviewManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1327368654
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1327368653}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1893161366}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1327368655
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1327368653}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deb8d905750b1284581c15ed02e9c5a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  renderSpace: {fileID: 0}
+  startObj: {fileID: 4448493142169164108, guid: d58df33684104034ca4dfdeb68b8eb4c, type: 3}
+  goalObj: {fileID: 506536122980066253, guid: dbcc195a85250ab4bb9f1106215740a7, type: 3}
+  fullBlock: {fileID: 356053950887668819, guid: cb8a866a5052b0b45b265995f182c077, type: 3}
+  black: {fileID: 2100000, guid: 8efa6b1e859760b42823e9e18fc46847, type: 2}
+  orange: {fileID: 2100000, guid: e74e10bcfce336f4aa2e2a2d0829c95a, type: 2}
 --- !u!1 &1348937538
 GameObject:
   m_ObjectHideFlags: 0
@@ -9792,6 +9842,7 @@ Transform:
   m_Children:
   - {fileID: 243734785}
   - {fileID: 1321028954}
+  - {fileID: 1327368654}
   - {fileID: 1216928815}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -11795,6 +11846,10 @@ PrefabInstance:
       propertyPath: panelSubmited
       value: 
       objectReference: {fileID: 1393382482}
+    - target: {fileID: 3155914837261162608, guid: 47717278f23069c41bcf158e3051cd56, type: 3}
+      propertyPath: previewManager
+      value: 
+      objectReference: {fileID: 1327368655}
     - target: {fileID: 3155914837261162608, guid: 47717278f23069c41bcf158e3051cd56, type: 3}
       propertyPath: panelMissingScans
       value: 
