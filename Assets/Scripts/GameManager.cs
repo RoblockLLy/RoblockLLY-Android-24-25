@@ -93,6 +93,7 @@ public class GameManager : MonoBehaviour {
   /// </summary>
   public void CodePanel() {
     if (panelExport.activeSelf) {
+      previewManager.removeLevel();
       panelExport.SetActive(false);
     } else {      
       int counter = 0, maxCounter = 1000;
@@ -113,7 +114,7 @@ public class GameManager : MonoBehaviour {
           contentObject.GetComponent<RectTransform>().sizeDelta = new Vector2(0f, heightPerLine * lineBreaks);
           inputField.GetComponent<RectTransform>().sizeDelta = new Vector2(180f, heightPerLine * lineBreaks);
           
-          previewManager.setLevel(finishedLevelText);
+          previewManager.setInternalValues(finishedLevelText, jsonBuilder.getLevelSize());
           previewManager.preview();
 
           panelExport.SetActive(true);

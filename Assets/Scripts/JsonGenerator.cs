@@ -607,7 +607,7 @@ public class JsonGenerator : MonoBehaviour {
         if (neighbor.Equals(blockedCell)) continue;
         if (usedPositions.Contains(neighbor)) continue;
         if (visited.Contains(neighbor)) continue;
-        
+
         visited.Add(neighbor);
         frontier.Enqueue(neighbor);
       }
@@ -693,6 +693,14 @@ public class JsonGenerator : MonoBehaviour {
   /// <returns>Int de la cantidad de objetos</returns>
   public int objectAmount() {
     return objects.Count;
+  }
+
+  /// <summary>
+  /// Getter para tamaño de nivel
+  /// </summary>
+  /// <returns>El tamaño del nivel</returns>
+  public int getLevelSize() {
+    return levelSize;
   }
 
   #endregion

@@ -14,9 +14,9 @@ public class PreviewManager : MonoBehaviour {
   
   #region Atributos
   
-  [Header("UI Elements")]
+  [Header("Camara")]
   [SerializeField] [Tooltip("")]
-  public GameObject renderSpace;
+  public Camera renderCamera;
   
   [Header("Object Prefabs")]
   [SerializeField] [Tooltip("")]
@@ -36,6 +36,11 @@ public class PreviewManager : MonoBehaviour {
   /// JSON con el nivel generado
   /// </summary>
   private JObject jsonLevel;
+
+  /// <summary>
+  /// Tamaño del nivel que se esta tratando, necesario para camara
+  /// </summary>
+  private int levelSize;
 
   /// <summary>
   /// Objeto padre en la cual se van a colocar todos los elementos del nivel
@@ -91,6 +96,24 @@ public class PreviewManager : MonoBehaviour {
           break;
       }
     }
+
+    allignCamera();
+  }
+
+  /// <summary>
+  /// Alinea la camara con el nivel en el escenario
+  /// </summary>
+  public void allignCamera() {
+    renderCamera.transform.position = new Vector3(renderCamera.transform.position.x, levelSize, renderCamera.transform.position.z);
+    Vector3 middlePoint = new Vector3(levelSize / 2, 0f, levelSize / 2);
+    renderCamera.transform.LookAt(middlePoint);
+  }
+
+  /// <summary>
+  /// Borra un nivel ya creado de antemano
+  /// </summary>
+  public void removeLevel() {
+    GameObject.Destroy(parentObject);
   }
 
   #endregion
@@ -101,8 +124,9 @@ public class PreviewManager : MonoBehaviour {
   /// Setter para el JObject que contiene el nivel generado
   /// </summary>
   /// <param name="level">String que se parseara como JSON</param>
-  public void setLevel(string level) {
+  public void setInternalValues(string level, int size) {
     jsonLevel = JObject.Parse(level);
+    levelSize = size;
   }
 
   /// <summary>
