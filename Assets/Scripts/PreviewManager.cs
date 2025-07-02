@@ -9,14 +9,19 @@
 
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PreviewManager : MonoBehaviour {
   
   #region Atributos
   
-  [Header("Camara")]
+  [Header("Rendering")]
   [SerializeField] [Tooltip("Camara usado para capturar imagen del preview")]
   public Camera renderCamera;
+  [SerializeField] [Tooltip("Textura vinculado a la camara encargado de renderizar la imagen")]
+  public RenderTexture renderTexture;
+  [SerializeField] [Tooltip("Imagen donde se mostrara la textura preview")]
+  public RawImage previewImage;
   
   [Header("Object Prefabs")]
   [SerializeField] [Tooltip("Prefab para representar el punto de partida")]
@@ -86,6 +91,16 @@ public class PreviewManager : MonoBehaviour {
   #endregion
 
   #region Preview
+
+  /// <summary>
+  /// Tenemos que incializar los elementos del preview en Start() en lugar de editor para que funcione en Android
+  /// </summary>
+  private void Start() {
+    renderTexture = new RenderTexture(1024, 1024, 16, RenderTextureFormat.Default);
+    renderTexture.Create();
+    renderCamera.targetTexture = renderTexture;
+    previewImage.texture = renderTexture;
+  }
 
   /// <summary>
   /// Funcion principal para la previsualización del nivel guardado

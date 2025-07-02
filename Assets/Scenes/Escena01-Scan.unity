@@ -6933,6 +6933,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   renderCamera: {fileID: 1670182982}
+  renderTexture: {fileID: 8400000, guid: b6c6c47fb0a23054f97ca91ed0f701d2, type: 2}
+  previewImage: {fileID: 1124422029}
   startObj: {fileID: 4448493142169164108, guid: d58df33684104034ca4dfdeb68b8eb4c, type: 3}
   goalObj: {fileID: 506536122980066253, guid: dbcc195a85250ab4bb9f1106215740a7, type: 3}
   fullBlock: {fileID: 356053950887668819, guid: cb8a866a5052b0b45b265995f182c077, type: 3}
@@ -8518,7 +8520,7 @@ Camera:
   m_GameObject: {fileID: 1670182979}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 4
+  m_ClearFlags: 2
   m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
