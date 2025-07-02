@@ -15,30 +15,58 @@ public class PreviewManager : MonoBehaviour {
   #region Atributos
   
   [Header("Camara")]
-  [SerializeField] [Tooltip("")]
+  [SerializeField] [Tooltip("Camara usado para capturar imagen del preview")]
   public Camera renderCamera;
   
   [Header("Object Prefabs")]
-  [SerializeField] [Tooltip("")]
+  [SerializeField] [Tooltip("Prefab para representar el punto de partida")]
   public GameObject startObj;
-  [SerializeField] [Tooltip("")]
+  [SerializeField] [Tooltip("Prefab para representar el punto objetivo")]
   public GameObject goalObj;
-  [SerializeField] [Tooltip("")]
+  [SerializeField] [Tooltip("Prefab para representar una pared")]
   public GameObject fullBlock;
-  [SerializeField] [Tooltip("")]
+  [SerializeField] [Tooltip("Prefab para representar una puerta interactiva")]
   public GameObject interactableDoor;
-  [SerializeField] [Tooltip("")]
+  [SerializeField] [Tooltip("Prefab para representar una placa presionable")]
   public GameObject pressurePlate;
-  [SerializeField] [Tooltip("")]
+  [SerializeField] [Tooltip("Prefab para representar un camino recto")]
   public GameObject straightPath;
-  [SerializeField] [Tooltip("")]
+  [SerializeField] [Tooltip("Prefab para representar una esquina de camino")]
   public GameObject cornerPath;
 
   [Header("Materials")]
-  [SerializeField] [Tooltip("")]
-  public Material black;
-  [SerializeField] [Tooltip("")]
+  [SerializeField] [Tooltip("Material matte usado para el color 'white'")]
+  public Material white;
+  [SerializeField] [Tooltip("Material matte usado para el color 'light red'")]
+  public Material lightRed;
+  [SerializeField] [Tooltip("Material matte usado para el color 'red'")]
+  public Material red;
+  [SerializeField] [Tooltip("Material matte usado para el color 'orange'")]
   public Material orange;
+  [SerializeField] [Tooltip("Material matte usado para el color 'light orange'")]
+  public Material lightOrange;
+  [SerializeField] [Tooltip("Material matte usado para el color 'yellow'")]
+  public Material yellow;
+  [SerializeField] [Tooltip("Material matte usado para el color 'green'")]
+  public Material green;
+  [SerializeField] [Tooltip("Material matte usado para el color 'lightGreen'")]
+  public Material lightGreen;
+  [SerializeField] [Tooltip("Material matte usado para el color 'turquoise'")]
+  public Material turquoise;
+  [SerializeField] [Tooltip("Material matte usado para el color 'light blue'")]
+  public Material lightBlue;
+  [SerializeField] [Tooltip("Material matte usado para el color 'blue'")]
+  public Material blue;
+  [SerializeField] [Tooltip("Material matte usado para el color 'purple'")]
+  public Material purple;
+  [SerializeField] [Tooltip("Material matte usado para el color 'pink'")]
+  public Material pink;
+  [SerializeField] [Tooltip("Material matte usado para el color 'brown'")]
+  public Material brown;
+  [SerializeField] [Tooltip("Material matte usado para el color 'gray'")]
+  public Material gray;
+  [SerializeField] [Tooltip("Material matte usado para el color 'black'")]
+  public Material black;
 
   /// <summary>
   /// JSON con el nivel generado
@@ -88,14 +116,14 @@ public class PreviewManager : MonoBehaviour {
           GameObject currentBlock = Instantiate(fullBlock);
           currentBlock.transform.SetParent(parentObject.transform);
           currentBlock.transform.position = stringPosToVector(obj["position"].ToString());
-          if (currentBlock.transform.position.y == 0) currentBlock.GetComponent<Renderer>().material = orange;
-          else currentBlock.GetComponent<Renderer>().material = black;
+          currentBlock.GetComponent<Renderer>().material = fetchMaterial(obj["options"][0]["Color"].ToString());
           break;
         case string temp when temp.StartsWith("Lifting Door"):
           GameObject currentInteractableDoor = Instantiate(interactableDoor);
           currentInteractableDoor.transform.SetParent(parentObject.transform);
           currentInteractableDoor.transform.position = stringPosToVector(obj["position"].ToString());
           currentInteractableDoor.transform.rotation = StringToQuaternion(obj["rotation"].ToString());
+          currentInteractableDoor.GetComponent<Renderer>().material = fetchMaterial(obj["options"][0]["Color"].ToString());
           break;
         case string temp when temp.StartsWith("Pressure Plate"):
           GameObject currentPlate = Instantiate(pressurePlate);
@@ -107,12 +135,18 @@ public class PreviewManager : MonoBehaviour {
           currentStraightPath.transform.SetParent(parentObject.transform);
           currentStraightPath.transform.position = stringPosToVector(obj["position"].ToString());
           currentStraightPath.transform.rotation = StringToQuaternion(obj["rotation"].ToString());
+          foreach (Transform child in currentStraightPath.transform) {
+            child.gameObject.GetComponent<Renderer>().material = fetchMaterial(obj["options"][0]["Color"].ToString());
+          }
           break;
         case string temp when temp.StartsWith("Corner Path"):
           GameObject currentCornerPath = Instantiate(cornerPath);
           currentCornerPath.transform.SetParent(parentObject.transform);
           currentCornerPath.transform.position = stringPosToVector(obj["position"].ToString());
           currentCornerPath.transform.rotation = StringToQuaternion(obj["rotation"].ToString());
+          foreach (Transform child in currentCornerPath.transform) {
+            child.gameObject.GetComponent<Renderer>().material = fetchMaterial(obj["options"][0]["Color"].ToString());
+          }
           break;
         default:
           Debug.LogWarning("Error - Non supported JSON element: \n" + obj);
@@ -168,6 +202,11 @@ public class PreviewManager : MonoBehaviour {
     return new Vector3(x, y, z);
   }
 
+  /// <summary>
+  /// Convierte un string con un Quaternion a un Quaternion propio
+  /// </summary>
+  /// <param name="str">String con Quaternion sin procesar</param>
+  /// <returns>Quaternion resultante</returns>
   private Quaternion StringToQuaternion(string str) {
     str = str.Trim('(', ')');
     string[] parts = str.Split(',');
@@ -178,6 +217,49 @@ public class PreviewManager : MonoBehaviour {
     float.TryParse(parts[3].Trim(), out float w);
 
     return new Quaternion(x, y, z, w);
+  }
+
+  /// <summary>
+  /// Devuelve un material en base al texto pasado
+  /// </summary>
+  /// <param name="text">Nombre del color en string</param>
+  /// <returns>Material correspondiente, blanco si no se reconoce</returns>
+  private Material fetchMaterial(string text) {
+    switch (text) {
+      case "White":
+        return white;
+      case "Light Red":
+        return lightRed;
+      case "Red":
+        return red;
+      case "Orange":
+        return orange;
+      case "Light Orange":
+        return lightOrange;
+      case "Yellow":
+        return yellow;
+      case "Green":
+        return green;
+      case "Light Green":
+        return lightGreen;
+      case "Turquoise":
+        return turquoise;
+      case "Light Blue":
+        return lightBlue;
+      case "Blue":
+        return blue;
+      case "Purple":
+        return purple;
+      case "Pink":
+        return pink;
+      case "Brown":
+        return brown;
+      case "Black":
+        return black;
+      default:
+        Debug.LogWarning("Unrecognized Color");
+        return white;
+    }
   }
 
   #endregion

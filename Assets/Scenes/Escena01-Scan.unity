@@ -6940,8 +6940,22 @@ MonoBehaviour:
   pressurePlate: {fileID: 4149378167703989498, guid: 80705c52f7aac4c4aab6ee4965730532, type: 3}
   straightPath: {fileID: 4931238148406314283, guid: 5aebcc68a7ad2b8429d45849e1570dc4, type: 3}
   cornerPath: {fileID: 6501660003524524416, guid: 2653f4887ad4abd41a1980e30e9e0b97, type: 3}
+  white: {fileID: 2100000, guid: 88cb1557943b15d4e95718e687de28db, type: 2}
+  lightRed: {fileID: 2100000, guid: 3a4a8efc7aa3d92418cbd9b6b3f455ab, type: 2}
+  red: {fileID: 2100000, guid: a0ff138311782544bbe9ba97be637438, type: 2}
+  orange: {fileID: 2100000, guid: baa93b629136ff640b30fbcee37301b5, type: 2}
+  lightOrange: {fileID: 2100000, guid: e74e10bcfce336f4aa2e2a2d0829c95a, type: 2}
+  yellow: {fileID: 2100000, guid: 781099c1e29c4294c925fe09e3fbe27f, type: 2}
+  green: {fileID: 2100000, guid: 5804b7bfbf7c5b246a11cb828dee7b74, type: 2}
+  lightGreen: {fileID: 2100000, guid: 5804b7bfbf7c5b246a11cb828dee7b74, type: 2}
+  turquoise: {fileID: 2100000, guid: 826c6b4b4cb9415459ad5046f32ff28b, type: 2}
+  lightBlue: {fileID: 2100000, guid: 16171cd1bde0cdf498a50cc663f971df, type: 2}
+  blue: {fileID: 2100000, guid: 62c6c0636f662924b95a5b85958a1e62, type: 2}
+  purple: {fileID: 2100000, guid: 5bd24b2f78466114782d93d25f8ad4d8, type: 2}
+  pink: {fileID: 2100000, guid: 129aac58ba2cfba4ab2a65eebee59c9d, type: 2}
+  brown: {fileID: 2100000, guid: b9ce4c7294169fa48868053c8a5fef1f, type: 2}
+  gray: {fileID: 2100000, guid: 0a1bbe49926d20c4191936644e23d26a, type: 2}
   black: {fileID: 2100000, guid: 8efa6b1e859760b42823e9e18fc46847, type: 2}
-  orange: {fileID: 2100000, guid: e74e10bcfce336f4aa2e2a2d0829c95a, type: 2}
 --- !u!1 &1348937538
 GameObject:
   m_ObjectHideFlags: 0
