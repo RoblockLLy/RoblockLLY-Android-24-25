@@ -41,14 +41,16 @@ public class JsonGenerator : MonoBehaviour {
   //  [6] Color Bomb
   //  [7] Black & White
 
+  [Header("Valores Modificables")]
+  [SerializeField] [Tooltip("Tamaño mínimo del nivel a generar")]
+  public int minGridSize = 7;
+  [SerializeField] [Tooltip("Tamaño máximo del nivel a generar")]
+  public int maxGridSize = 30;
+
   /// <summary>
   /// Tamaño del nivel a generar, NxN
   /// </summary>
   private int levelSize = 7;
-  /// <summary>
-  /// Tamaño mínimo del nivel a generar
-  /// </summary>
-  private const int minGridSize = 7;
 
   /// <summary>
   /// Lista de elementos deseados dentro del nivel, en las mismas posiciones que la lista "objetos"
@@ -330,7 +332,7 @@ public class JsonGenerator : MonoBehaviour {
   private JObject buildEnv() {
     try {
       int temp = int.Parse(sizeText.text);
-      levelSize = temp < minGridSize ? minGridSize : temp;
+      levelSize = temp < minGridSize ? minGridSize : (temp > maxGridSize ? maxGridSize : temp);
       if (activeObject[2] && levelSize % 2 == 0) levelSize += 1;  // Si tenemos laberinto, queremos que el tamaño sea impar
     } catch {
       Debug.LogWarning("Size Input was not a valid number");
