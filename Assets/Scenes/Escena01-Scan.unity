@@ -6753,6 +6753,8 @@ MonoBehaviour:
   - {fileID: 1039446964}
   - {fileID: 6696871319824348996}
   - {fileID: 5652942674523544984}
+  minGridSize: 7
+  maxGridSize: 30
 --- !u!1 &1322471553
 GameObject:
   m_ObjectHideFlags: 0
@@ -6934,6 +6936,10 @@ MonoBehaviour:
   startObj: {fileID: 4448493142169164108, guid: d58df33684104034ca4dfdeb68b8eb4c, type: 3}
   goalObj: {fileID: 506536122980066253, guid: dbcc195a85250ab4bb9f1106215740a7, type: 3}
   fullBlock: {fileID: 356053950887668819, guid: cb8a866a5052b0b45b265995f182c077, type: 3}
+  interactableDoor: {fileID: 8740873883593937335, guid: d147a979a1601ba4c9abdbd474d7e3c3, type: 3}
+  pressurePlate: {fileID: 4149378167703989498, guid: 80705c52f7aac4c4aab6ee4965730532, type: 3}
+  straightPath: {fileID: 4931238148406314283, guid: 5aebcc68a7ad2b8429d45849e1570dc4, type: 3}
+  cornerPath: {fileID: 6501660003524524416, guid: 2653f4887ad4abd41a1980e30e9e0b97, type: 3}
   black: {fileID: 2100000, guid: 8efa6b1e859760b42823e9e18fc46847, type: 2}
   orange: {fileID: 2100000, guid: e74e10bcfce336f4aa2e2a2d0829c95a, type: 2}
 --- !u!1 &1348937538

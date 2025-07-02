@@ -25,6 +25,14 @@ public class PreviewManager : MonoBehaviour {
   public GameObject goalObj;
   [SerializeField] [Tooltip("")]
   public GameObject fullBlock;
+  [SerializeField] [Tooltip("")]
+  public GameObject interactableDoor;
+  [SerializeField] [Tooltip("")]
+  public GameObject pressurePlate;
+  [SerializeField] [Tooltip("")]
+  public GameObject straightPath;
+  [SerializeField] [Tooltip("")]
+  public GameObject cornerPath;
 
   [Header("Materials")]
   [SerializeField] [Tooltip("")]
@@ -77,19 +85,34 @@ public class PreviewManager : MonoBehaviour {
       
       switch (name) {   // Switch para saber que objeto debemos colocar
         case string temp when temp.StartsWith("Full Block"):
-          GameObject current = Instantiate(fullBlock);
-          current.transform.SetParent(parentObject.transform);
-          current.transform.position = stringPosToVector(obj["position"].ToString());
-          if (current.transform.position.y == 0) current.GetComponent<Renderer>().material = orange;
-          else current.GetComponent<Renderer>().material = black;
+          GameObject currentBlock = Instantiate(fullBlock);
+          currentBlock.transform.SetParent(parentObject.transform);
+          currentBlock.transform.position = stringPosToVector(obj["position"].ToString());
+          if (currentBlock.transform.position.y == 0) currentBlock.GetComponent<Renderer>().material = orange;
+          else currentBlock.GetComponent<Renderer>().material = black;
           break;
         case string temp when temp.StartsWith("Lifting Door"):
+          GameObject currentInteractableDoor = Instantiate(interactableDoor);
+          currentInteractableDoor.transform.SetParent(parentObject.transform);
+          currentInteractableDoor.transform.position = stringPosToVector(obj["position"].ToString());
+          currentInteractableDoor.transform.rotation = StringToQuaternion(obj["rotation"].ToString());
           break;
         case string temp when temp.StartsWith("Pressure Plate"):
+          GameObject currentPlate = Instantiate(pressurePlate);
+          currentPlate.transform.SetParent(parentObject.transform);
+          currentPlate.transform.position = stringPosToVector(obj["position"].ToString());
           break;
         case string temp when temp.StartsWith("Straight Path"):
+          GameObject currentStraightPath = Instantiate(straightPath);
+          currentStraightPath.transform.SetParent(parentObject.transform);
+          currentStraightPath.transform.position = stringPosToVector(obj["position"].ToString());
+          currentStraightPath.transform.rotation = StringToQuaternion(obj["rotation"].ToString());
           break;
         case string temp when temp.StartsWith("Corner Path"):
+          GameObject currentCornerPath = Instantiate(cornerPath);
+          currentCornerPath.transform.SetParent(parentObject.transform);
+          currentCornerPath.transform.position = stringPosToVector(obj["position"].ToString());
+          currentCornerPath.transform.rotation = StringToQuaternion(obj["rotation"].ToString());
           break;
         default:
           Debug.LogWarning("Error - Non supported JSON element: \n" + obj);
@@ -143,6 +166,18 @@ public class PreviewManager : MonoBehaviour {
     float.TryParse(parts[2].Trim(), out float z);
 
     return new Vector3(x, y, z);
+  }
+
+  private Quaternion StringToQuaternion(string str) {
+    str = str.Trim('(', ')');
+    string[] parts = str.Split(',');
+
+    float.TryParse(parts[0].Trim(), out float x);
+    float.TryParse(parts[1].Trim(), out float y);
+    float.TryParse(parts[2].Trim(), out float z);
+    float.TryParse(parts[3].Trim(), out float w);
+
+    return new Quaternion(x, y, z, w);
   }
 
   #endregion
